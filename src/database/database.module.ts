@@ -12,12 +12,16 @@ import { DatabaseService } from './databaseservice'
     MongooseModule.forRoot(process.env.MONGODB_URI),
     MongooseModule.forFeature([
       { name: schema.User.name, schema: schema.UserSchema },
-       { name: schema.Store.name, schema: schema.StoreSchema },
-        { name: schema.Payment.name, schema: schema.PaymentSchema },
-          { name: schema.Game.name, schema: schema.GameSchema },
-           { name: schema.Friend.name, schema: schema.FriendSchema },
-            { name: schema.Clan.name, schema: schema.ClanSchema },
-             { name: schema.clanRequest.name, schema: schema.clanRequestSchema },
+      { name: schema.School.name, schema: schema.SchoolSchema},
+       { name: schema.Admin.name, schema: schema.AdminSchema},
+       { name: schema.Class.name, schema: schema.ClassSchema},
+       { name: schema.Student.name, schema: schema.StudentSchema},
+        { name: schema.Section.name, schema: schema.SectionSchema},
+        {name: schema.Parent.name, schema: schema.ParentSchema},
+        {name: schema.Report.name, schema: schema.ReportSchema},
+        {name: schema.Book.name, schema: schema.BookSchema},
+        {name: schema.Library.name, schema: schema.LibrarySchema}
+       
 
     ]),
   ],

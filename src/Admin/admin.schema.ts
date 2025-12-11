@@ -1,0 +1,42 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+
+export type AdminDocument = Admin & Document;
+
+@Schema({ timestamps: true })
+export class Admin {
+  @Prop()
+  name: string;
+
+@Prop({ unique: true })
+email: string;
+
+
+  @Prop()
+  password: string;
+
+   @Prop()
+  otp: string;
+  
+  
+  @Prop()
+  image: string;
+  
+   @Prop()
+   otpExpiresAt: Date;
+
+    @Prop()
+   refreshTokenExpiresAt: Date;
+
+     @Prop()
+  refreshToken: string
+
+
+  @Prop()
+  age: number;
+
+  @Prop({ enum: ['admin', 'superAdmin'], default: 'admin' })
+  role: string;
+}
+
+export const AdminSchema = SchemaFactory.createForClass(Admin);
