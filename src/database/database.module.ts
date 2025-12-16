@@ -20,7 +20,10 @@ import { DatabaseService } from './databaseservice'
         {name: schema.Parent.name, schema: schema.ParentSchema},
         {name: schema.Report.name, schema: schema.ReportSchema},
         {name: schema.Book.name, schema: schema.BookSchema},
-        {name: schema.Library.name, schema: schema.LibrarySchema}
+        {name: schema.Library.name, schema: schema.LibrarySchema},
+        {name: schema.Issuance.name, schema: schema.IssuanceSchema},
+        {name: schema.FeesType.name, schema: schema.FeesTypeSchema},
+       { name: schema.Fees.name, schema: schema.FeesSchema}
        
 
     ]),

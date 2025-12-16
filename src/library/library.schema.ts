@@ -16,7 +16,7 @@ export class Library {
 
   @Prop({
     type: [{
-      memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },  
+      memberId: { type: mongoose.Schema.Types.ObjectId },  
       memberType: { type: String }
     }]
   })

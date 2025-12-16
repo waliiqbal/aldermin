@@ -11,6 +11,10 @@ export class Issuance {
   @Prop({ type: String })
   memberId: string;  
 
+  
+  @Prop({ type: String })
+  memberType: string;  
+
   @Prop({ type: String })
   bookId: string;  
 
@@ -24,5 +28,7 @@ export class Issuance {
   isReturned: boolean;  
 
 }
+
+
 
 export const IssuanceSchema = SchemaFactory.createForClass(Issuance);

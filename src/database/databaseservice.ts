@@ -35,7 +35,15 @@ export class DatabaseService {
       @InjectModel(schema.Library.name)
    private libraryModel: Model<schema.LibraryDocument>,
 
+   
+      @InjectModel(schema.Issuance.name)
+   private issuanceModel: Model<schema.IssuanceDocument>,
 
+ @InjectModel(schema.FeesType.name)
+   private feestypeModel: Model<schema.FeesTypeDocument>,
+
+ @InjectModel(schema.Fees.name)
+   private feesModel: Model<schema.FeesDocument>,
 
 
 
@@ -53,6 +61,9 @@ export class DatabaseService {
       reportModel: this.reportModel,
       bookModel: this.bookModel,
       libraryModel: this.libraryModel,
+      issuanceModel: this.issuanceModel,
+      feestypeModel: this.feestypeModel,
+      feesModel: this.feesModel,
   
 
         };
