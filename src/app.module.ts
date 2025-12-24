@@ -15,6 +15,10 @@ import { SectionModule } from './section/section.module';
 import { StudentModule } from './student/student.module';
 import { ReportModule } from './report/report.module';
 import { LibraryModule } from './library/library.module';
+import { FeesModule } from './fees/fees.module';
+import { SubjectModule } from './subject/subject.module';
+import { HomeworkModule } from './homework/homework.module';
+import { attendanceModule } from './Attendance/attendance.module';
 
 
 @Module({
@@ -33,6 +37,11 @@ import { LibraryModule } from './library/library.module';
     StudentModule,
     ReportModule,
     LibraryModule,
+    FeesModule,
+    SubjectModule,
+    HomeworkModule,
+    attendanceModule,
+
 
 
    

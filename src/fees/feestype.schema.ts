@@ -9,10 +9,15 @@ export class FeesType {
   name: string;
 
   @Prop()
-  descrption: string; 
+  description: string; 
+
+    @Prop({ default: false })
+    isTuition: boolean;
 
   @Prop({ default: true })
   isActive: boolean;
 }
+
+
 
 export const FeesTypeSchema = SchemaFactory.createForClass(FeesType);

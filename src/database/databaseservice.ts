@@ -45,8 +45,19 @@ export class DatabaseService {
  @InjectModel(schema.Fees.name)
    private feesModel: Model<schema.FeesDocument>,
 
+   
+ @InjectModel(schema.Subject.name)
+   private subjectModel : Model<schema.SubjectDocument>,
 
+ @InjectModel(schema.Homework.name)
+   private homeworkModel : Model<schema.HomeworkDocument>,
 
+   
+ @InjectModel(schema.Attendance.name)
+   private attendanceModel : Model<schema.AttendanceDocument>,
+
+   @InjectModel(schema.Teacher.name)
+   private teacherModel : Model<schema.AttendanceDocument>,
 
      ) {}
      get repositories() {
@@ -64,6 +75,10 @@ export class DatabaseService {
       issuanceModel: this.issuanceModel,
       feestypeModel: this.feestypeModel,
       feesModel: this.feesModel,
+      subjectModel: this.subjectModel,
+      homeworkModel: this.homeworkModel,
+      attendanceModel: this.attendanceModel,
+      teacherModel: this.teacherModel
   
 
         };

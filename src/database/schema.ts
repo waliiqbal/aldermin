@@ -15,7 +15,11 @@ export {Student, StudentDocument, StudentSchema} from '../student/student.schema
  export {Library , LibraryDocument, LibrarySchema} from '../library/library.schema';
  export {Issuance , IssuanceDocument, IssuanceSchema} from '../library/issuance.schema'
  export {FeesType , FeesTypeDocument, FeesTypeSchema} from '../fees/feestype.schema';
- export {Fees, FeesDocument, FeesSchema} from '../fees/fees.schema'
+ export {Fees, FeesDocument, FeesSchema} from '../fees/fees.schema';
+  export {Subject, SubjectDocument, SubjectSchema} from '../subject/subject.schema';
+  export {Homework, HomeworkDocument, HomeworkSchema} from '../homework/homework.schema';
+  export {Attendance, AttendanceDocument, AttendanceSchema} from '../Attendance/attendance.schema'
+  export {Teacher, TeacherDocument, TeacherSchema} from '../teacher/teacher.schema'
 
 
 

@@ -11,6 +11,12 @@ export class Fees {
   @Prop({ type: Types.ObjectId, ref: 'School', required: true })
   schoolId: string;
 
+   @Prop({ type: Types.ObjectId, ref: 'School', required: true })
+  classId : string;
+
+    @Prop({ type: Types.ObjectId, ref: 'Section', required: true })
+  Section : string;
+
 
   @Prop({ type: Types.ObjectId, ref: 'FeesGroup', required: false })
   feesGroupId: string;
@@ -43,8 +49,20 @@ export class Fees {
   @Prop({ default: 0 })
   paidAmount: number;
 
-  @Prop({ enum: ['unpaid', 'partial', 'paid'], default: 'unpaid' })
+  @Prop({ enum: ['unpaid', 'paid'], default: 'unpaid' })
   status: string;
+
+      @Prop()
+    carryForward: number; 
+
+          @Prop()
+    lateFee: number; 
+
 }
+ 
+
+
+ 
+
 
 export const FeesSchema = SchemaFactory.createForClass(Fees);

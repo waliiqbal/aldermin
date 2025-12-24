@@ -1,13 +1,14 @@
-import { Controller, Post, Body, Req, UseGuards, BadRequestException, Get } from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards, BadRequestException, Get, NotFoundException, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FeesTypeService } from './fees.service'
+import { CreateFeesDto } from './createfees.dto';
 
-@Controller('fees-type')
+@Controller('fees')
 export class FeesTypeController {
   constructor(private readonly feesTypeService: FeesTypeService) {}
 
   @UseGuards(AuthGuard('jwt'))
-  @Post('add')
+  @Post('addFeesType')
   async addFeesType(
     @Req() req: any,
     @Body() body: { name: string; description?: string },
@@ -22,31 +23,42 @@ export class FeesTypeController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('getAll')
+  @Get('getAllFeesType')
   async getAllFeesType() {
     return this.feesTypeService.getAllFeesType();
   }
   
    @UseGuards(AuthGuard('jwt'))
-  @Post('create')
-  async createFees(
-    @Req() req: any,
-    @Body() body: {
-      studentId: string;
-      schoolId: string;
-      feesGroupId: string;
-      issueDate: string;
-      dueDate: string;
-      month?: string;
-      items: { feesTypeId: string; amount: number }[];
-    },
-  ) {
+@Post('createInvoice')
+async createFees(
+  @Req() req: any,
+  @Body() body: CreateFeesDto,
+) {
+  const adminId = req.user?.userId;
+
+  if (!adminId) {
+    throw new BadRequestException('Admin not found in token');
+  }
+
+  return this.feesTypeService.createFees(adminId, body);
+}
+
+ @UseGuards(AuthGuard('jwt'))
+  @Get('Getinvoice')
+  async getFeesInvoice(@Req() req: any, @Query() query: any) {
     const adminId = req.user.userId;
+    if (!adminId) throw new NotFoundException('Admin not found in token');
+    return this.feesTypeService.getFeesInvoice(adminId, query);
+  }
 
-    if (!adminId) {
-      throw new BadRequestException('Admin not found in token');
-    }
+  @UseGuards(AuthGuard('jwt'))
+  @Post('payment')
+  async payFees(@Req() req: any, @Body() body: any) {
+    const adminId = req.user.userId;
+    if (!adminId) throw new NotFoundException('Admin not found in token');
 
-    return this.feesTypeService.createFees(adminId, body);
+    return this.feesTypeService.payFees(adminId, body);
   }
 }
+
+
