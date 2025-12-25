@@ -22,178 +22,194 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) {}
 
-  // ✅ Signup
- async signup(signupDto: SignupDto) {
-  try {
-    const { name, email, password } = signupDto;
 
-    const existingUser = await this.databaseService.repositories.userModel.findOne({ email });
+async signup(signupDto: SignupDto) {
+  try {
+    const { name, email, password, userType } = signupDto;
+
+    let userModel;
+
+ 
+    if (userType === 'teacher') {
+      userModel = this.databaseService.repositories.teacherModel;
+    } 
+    else if (userType === 'student') {
+      userModel = this.databaseService.repositories.studentModel;
+    } 
+    else if (userType === 'parent') {
+      userModel = this.databaseService.repositories.parentModel;
+    } 
+    else {
+      throw new UnauthorizedException('Invalid user type');
+    }
+
+  
+    const existingUser = await userModel.findOne({ email });
     if (existingUser) {
       throw new UnauthorizedException('User already exists');
     }
 
+  
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new this.databaseService.repositories.userModel({
+  
+    const user = new userModel({
       name,
       email,
-      password: hashedPassword, 
+      password: hashedPassword,
+      userType,
     });
 
     await user.save();
 
-    const payload = { sub: user._id, email: user.email };
+    
+    const payload = {
+      sub: user._id,
+      email: user.email,
+      userType: user.userType,
+    };
+
     const token = this.jwtService.sign(payload);
 
-    return { 
-  message: 'User registered successfully',
-  data: {
-    name: user.name,
-    email: user.email,
-    displayPic: user.displayPic,
-    level: user.level,
-    currentXp: user.currentXp,
-    totalXp: user.totalXp,
-    gem: user.gem,
-    diamond: user.diamond,
-    coin: user.coin,
-    totalMatch: user.totalMatch,
-    won: user.won,
-    lost: user.lost,
-    kills: user.kills,
-    death: user.death,
-    assists: user.assists,
-    hours: user.hours,
-    availableSkill: user.availableSkill,
-    token
-  }
-};
+    return {
+      message: 'User registered successfully',
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        userType: user.userType,
+        token,
+      },
+    };
+
   } catch (error) {
     throw new UnauthorizedException(error.message || 'Signup failed');
   }
 }
 
-  // ✅ Login
-  async login(loginDto: LoginDto) {
+
+async login(loginDto: LoginDto) {
   try {
-    const { email, password } = loginDto;
+    const { email, password, userType } = loginDto;
 
-    const user = await this.databaseService.repositories.userModel.findOne({ email });
+    let userModel;
 
+
+    if (userType === 'teacher') {
+      userModel = this.databaseService.repositories.teacherModel;
+    } 
+    else if (userType === 'student') {
+      userModel = this.databaseService.repositories.studentModel;
+    } 
+    else if (userType === 'parent') {
+      userModel = this.databaseService.repositories.parentModel;
+    } 
+    else {
+      throw new UnauthorizedException('Invalid user type');
+    }
+
+ 
+    const user = await userModel.findOne({ email });
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
-    
-    
-    if (user.providerId) {
-      throw new UnauthorizedException(
-        `This account is registered using ${user.providerId} login. Use social login.`
-      );
+  
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      throw new UnauthorizedException('Invalid email or password');
     }
 
-    // 🔐 Local user → check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new UnauthorizedException('Invalid password');
-    }
+   
+    const payload = {
+      sub: user._id,
+      email: user.email,
+      userType: user.userType,
+    };
 
-    // ✅ Generate token
-    const payload = { sub: user._id, email: user.email };
     const token = this.jwtService.sign(payload);
 
-    return { 
-  message: 'User registered successfully',
-  data: {
-    name: user.name,
-    email: user.email,
-    displayPic: user.displayPic,
-    level: user.level,
-    currentXp: user.currentXp,
-    totalXp: user.totalXp,
-    gem: user.gem,
-    diamond: user.diamond,
-    coin: user.coin,
-    totalMatch: user.totalMatch,
-    won: user.won,
-    lost: user.lost,
-    kills: user.kills,
-    death: user.death,
-    assists: user.assists,
-    hours: user.hours,
-    availableSkill: user.availableSkill,
-    token
-  }
-};
+    return {
+      message: 'Login successful',
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        userType: user.userType,
+        token,
+      },
+    };
+
   } catch (error) {
     throw new UnauthorizedException(error.message || 'Login failed');
   }
 }
-async socialLogin(
-  authProvider: string,
-  name: string,
-  email: string,
-  socialId: string,
-  displayPic: string
-) {
-  try {
-    // ✅ Step 1: Required checks
-    if (!socialId) {
-      throw new UnauthorizedException("socialId must be provided");
-    }
-    if (!email) {
-      throw new UnauthorizedException("email must be provided");
-    }
 
-    // ✅ Step 2: Check if user exists by email
-    let user = await this.databaseService.repositories.userModel.findOne({ email });
+// async socialLogin(
+//   authProvider: string,
+//   name: string,
+//   email: string,
+//   socialId: string,
+//   displayPic: string
+// ) {
+//   try {
 
-    if (user) {
-      // 👉 Case A: User already exists with password but no socialId
-      if (user.password && !user.providerId) {
-        user.providerId = socialId;
-        user.authProvider = authProvider;
-        user.displayPic = displayPic;
-        await user.save();
-      }
+//     if (!socialId) {
+//       throw new UnauthorizedException("socialId must be provided");
+//     }
+//     if (!email) {
+//       throw new UnauthorizedException("email must be provided");
+//     }
 
-      // 👉 Case B: User already exists with socialId
-      else if (user.providerId && user.providerId !== socialId) {
-        throw new UnauthorizedException(
-          "This email is linked with another social account."
-        );
-      }
-    } else {
+
+//     let user = await this.databaseService.repositories.userModel.findOne({ email });
+
+//     if (user) {
+//       // 👉 Case A: User already exists with password but no socialId
+//       if (user.password && !user.providerId) {
+//         user.providerId = socialId;
+//         user.authProvider = authProvider;
+//         user.displayPic = displayPic;
+//         await user.save();
+//       }
+
+//       // 👉 Case B: User already exists with socialId
+//       else if (user.providerId && user.providerId !== socialId) {
+//         throw new UnauthorizedException(
+//           "This email is linked with another social account."
+//         );
+//       }
+//     } else {
       
-    user = new this.databaseService.repositories.userModel({
-        name,
-        email,
-        providerId: socialId,
-        authProvider,
-        displayPic,
-      });
-      await user.save();
-    }
+//     user = new this.databaseService.repositories.userModel({
+//         name,
+//         email,
+//         providerId: socialId,
+//         authProvider,
+//         displayPic,
+//       });
+//       await user.save();
+//     }
 
-    // ✅ Step 3: Generate token
-    const payload = {
-      sub: user._id,
-      email: user.email,
-    };
+//     // ✅ Step 3: Generate token
+//     const payload = {
+//       sub: user._id,
+//       email: user.email,
+//     };
 
-    const jwtToken = this.jwtService.sign(payload, { expiresIn: "1h" });
+//     const jwtToken = this.jwtService.sign(payload, { expiresIn: "1h" });
 
-    return {
-      message: "Social login successful",
-      data: {
-        token: jwtToken,
-        user,
-      },
-    };
-  } catch (error) {
-    throw new UnauthorizedException(error.message || "Social login failed");
-  }
-}
+//     return {
+//       message: "Social login successful",
+//       data: {
+//         token: jwtToken,
+//         user,
+//       },
+//     };
+//   } catch (error) {
+//     throw new UnauthorizedException(error.message || "Social login failed");
+//   }
+// }
 
 }
 

@@ -6,7 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { DatabaseModule } from './database/database.module';
-import { UsersModule } from './user/user.module';
+// import { UsersModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { OtpModule } from './otp/otp.module';
 import { AdminModule } from './Admin/admin.module';
@@ -28,7 +28,7 @@ import { attendanceModule } from './Attendance/attendance.module';
       isGlobal: true,
     }),
     DatabaseModule,
-    UsersModule,
+    // UsersModule,
     AuthModule,
     OtpModule,
     AdminModule,

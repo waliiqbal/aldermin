@@ -12,4 +12,12 @@ export class SignupDto {
   @IsNotEmpty()
   @IsString()
   password: string;
+
+   @IsNotEmpty()
+  @IsString()
+  userType: string;
 }
+
+
+
+
