@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy'
+import { OtpModule } from 'src/otp/otp.module';
 
 import { User, UserSchema } from '../user/schema/user.schema';
 
@@ -15,7 +16,7 @@ import { User, UserSchema } from '../user/schema/user.schema';
   imports: [
    
     ConfigModule,
-
+     OtpModule,
     
     PassportModule,
 

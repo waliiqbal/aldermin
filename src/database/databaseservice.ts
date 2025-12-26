@@ -59,6 +59,14 @@ export class DatabaseService {
    @InjectModel(schema.Teacher.name)
    private teacherModel : Model<schema.AttendanceDocument>,
 
+        @InjectModel(schema.Exam.name)
+    private examModel: Model<schema.ExamDocument>,
+
+
+     @InjectModel(schema.ExamSchedule.name)
+    private examScheduleModel: Model<schema.ExamScheduleDocument>,
+
+
      ) {}
      get repositories() {
     return {
@@ -78,7 +86,9 @@ export class DatabaseService {
       subjectModel: this.subjectModel,
       homeworkModel: this.homeworkModel,
       attendanceModel: this.attendanceModel,
-      teacherModel: this.teacherModel
+      teacherModel: this.teacherModel,
+      examModel: this.examModel,
+      examScheduleModel: this.examScheduleModel
   
 
         };

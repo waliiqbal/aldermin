@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { SignupDto } from './dto/signup.dto';
 import { SocialLoginDto  } from './dto/social-login.dto';
 import { LoginDto } from './dto/login.dto';
+import { OtpService } from 'src/otp/otp.service';
 import { DatabaseService } from "src/database/databaseservice";
 import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
@@ -18,6 +19,7 @@ export class AuthService {
   constructor(
    
     private databaseService: DatabaseService,
+      private readonly otpService: OtpService, 
 
     private readonly jwtService: JwtService
   ) {}
@@ -29,63 +31,57 @@ async signup(signupDto: SignupDto) {
 
     let userModel;
 
- 
     if (userType === 'teacher') {
       userModel = this.databaseService.repositories.teacherModel;
-    } 
-    else if (userType === 'student') {
+    } else if (userType === 'student') {
       userModel = this.databaseService.repositories.studentModel;
-    } 
-    else if (userType === 'parent') {
+    } else if (userType === 'parent') {
       userModel = this.databaseService.repositories.parentModel;
-    } 
-    else {
+    } else {
       throw new UnauthorizedException('Invalid user type');
     }
 
-  
+
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {
       throw new UnauthorizedException('User already exists');
     }
 
-  
+   
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min
+
+ 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-  
+    
     const user = new userModel({
       name,
       email,
       password: hashedPassword,
       userType,
+      otp,
+      otpExpiresAt,
+      isVerified: false,
     });
 
     await user.save();
 
-    
-    const payload = {
-      sub: user._id,
-      email: user.email,
-      userType: user.userType,
-    };
-
-    const token = this.jwtService.sign(payload);
+    // 5️⃣ Send OTP
+    await this.otpService.sendOtp(email, otp);
 
     return {
-      message: 'User registered successfully',
+      message: 'OTP sent successfully',
       data: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        userType: user.userType,
-        token,
+        userId: user._id,
+        otp: user.otp, // ⚠️ production me ye response me mat bhejna
       },
     };
-
   } catch (error) {
     throw new UnauthorizedException(error.message || 'Signup failed');
   }
 }
+
 
 
 async login(loginDto: LoginDto) {
@@ -144,6 +140,8 @@ async login(loginDto: LoginDto) {
     throw new UnauthorizedException(error.message || 'Login failed');
   }
 }
+
+
 
 // async socialLogin(
 //   authProvider: string,

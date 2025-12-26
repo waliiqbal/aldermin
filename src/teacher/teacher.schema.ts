@@ -16,7 +16,17 @@ export class Teacher {
     @Prop({ required: true })
   password: string;
 
+   @Prop()
+  otp: string;
+  
+   @Prop()
+   otpExpiresAt: Date;
 
+  @Prop({ default: false })
+  isVerified: boolean;
+
+  @Prop({ default: "active" })
+  status: string;
  
 
 

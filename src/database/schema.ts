@@ -20,6 +20,8 @@ export {Student, StudentDocument, StudentSchema} from '../student/student.schema
   export {Homework, HomeworkDocument, HomeworkSchema} from '../homework/homework.schema';
   export {Attendance, AttendanceDocument, AttendanceSchema} from '../Attendance/attendance.schema'
   export {Teacher, TeacherDocument, TeacherSchema} from '../teacher/teacher.schema'
+  export {Exam, ExamDocument, ExamSchema} from '../exam/schema/exam.schema'
+  export {ExamSchedule, ExamScheduleDocument, ExamScheduleSchema} from '../exam/schema/examschedule.schema'
 
 
 

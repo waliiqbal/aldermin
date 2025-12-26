@@ -19,6 +19,7 @@ import { FeesModule } from './fees/fees.module';
 import { SubjectModule } from './subject/subject.module';
 import { HomeworkModule } from './homework/homework.module';
 import { attendanceModule } from './Attendance/attendance.module';
+import { ExamModule } from './exam/exam.module';
 
 
 @Module({
@@ -41,6 +42,7 @@ import { attendanceModule } from './Attendance/attendance.module';
     SubjectModule,
     HomeworkModule,
     attendanceModule,
+    ExamModule
 
 
 
