@@ -49,7 +49,7 @@ async signup(signupDto: SignupDto) {
 
    
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min
+    const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); 
 
  
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -74,7 +74,7 @@ async signup(signupDto: SignupDto) {
       message: 'OTP sent successfully',
       data: {
         userId: user._id,
-        otp: user.otp, // ⚠️ production me ye response me mat bhejna
+        otp: user.otp, 
       },
     };
   } catch (error) {
@@ -116,6 +116,10 @@ async login(loginDto: LoginDto) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (!user.isVerified) {
+  throw new UnauthorizedException('Account not verified. Please verify OTP first');
+}
+
    
     const payload = {
       sub: user._id,
@@ -138,6 +142,312 @@ async login(loginDto: LoginDto) {
 
   } catch (error) {
     throw new UnauthorizedException(error.message || 'Login failed');
+  }
+}
+
+async resendOtp(email: string, userType: string) {
+  try {
+
+    let userModel;
+
+    
+    if (userType === 'teacher') {
+      userModel = this.databaseService.repositories.teacherModel;
+    } 
+    else if (userType === 'student') {
+      userModel = this.databaseService.repositories.studentModel;
+    } 
+    else if (userType === 'parent') {
+      userModel = this.databaseService.repositories.parentModel;
+    } 
+    else {
+      throw new UnauthorizedException('Invalid user type');
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+ 
+    if (user.isVerified) {
+      throw new UnauthorizedException('User already verified');
+    }
+
+  
+    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.otp = newOtp;
+    user.otpExpiresAt = otpExpiresAt;
+    await user.save();
+
+    
+    await this.otpService.sendOtp(user.email, newOtp);
+
+    return {
+      message: 'New OTP sent successfully to your email',
+      data: {
+        userId: user._id,
+        otp: user.otp,
+      },
+    };
+
+  } catch (error) {
+    throw new UnauthorizedException(error.message || 'Resend OTP failed');
+  }
+}
+
+async verifyOtp(email: string, userType: string, otp: string) {
+  try {
+
+    let userModel;
+
+ 
+    if (userType === 'teacher') {
+      userModel = this.databaseService.repositories.teacherModel;
+    } 
+    else if (userType === 'student') {
+      userModel = this.databaseService.repositories.studentModel;
+    } 
+    else if (userType === 'parent') {
+      userModel = this.databaseService.repositories.parentModel;
+    } 
+    else {
+      throw new UnauthorizedException('Invalid user type');
+    }
+
+ 
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+ 
+    if (user.isVerified) {
+      throw new UnauthorizedException('User already verified');
+    }
+
+
+    if (user.otp !== otp) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+  
+    if (user.otpExpiresAt && new Date() > user.otpExpiresAt) {
+      throw new UnauthorizedException('OTP has expired');
+    }
+
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpiresAt = null;
+    await user.save();
+
+   
+    const payload = { sub: user._id, email: user.email, userType: user.userType };
+    const token = this.jwtService.sign(payload, { expiresIn: '1h' });
+
+    return {
+      message: 'OTP verified successfully',
+      data: {
+        token,
+        user: {
+          _id: user._id,
+          fullname: user.fullname,
+          email: user.email,
+          userType: user.userType,
+          phoneNo: user.phoneNo,
+          address: user.address,
+        },
+      },
+    };
+
+  } catch (error) {
+    throw new UnauthorizedException(error.message || 'OTP verification failed');
+  }
+}
+
+
+
+async forgotPassword(email: string, userType: string) {
+  try {
+    let userModel;
+
+    if (userType === 'teacher') {
+      userModel = this.databaseService.repositories.teacherModel;
+    } else if (userType === 'student') {
+      userModel = this.databaseService.repositories.studentModel;
+    } else if (userType === 'parent') {
+      userModel = this.databaseService.repositories.parentModel;
+    } else {
+      throw new UnauthorizedException('Invalid user type');
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      throw new UnauthorizedException('User not found with this email');
+    }
+
+ 
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+   
+    user.otp = otp;
+    user.otpExpiresAt = otpExpiresAt;
+    await user.save();
+
+
+    await this.otpService.sendOtp(user.email, otp);
+
+   
+    return {
+      message: 'OTP sent successfully to your email for password reset',
+      data: {
+        userId: user._id,
+        otp: user.otp,
+      },
+    };
+  } catch (error) {
+    throw new UnauthorizedException(error.message || 'Forgot password failed');
+  }
+}
+
+async resetPassword(email: string, userType: string, otp: string, newPassword: string) {
+  try {
+    let userModel;
+
+    if (userType === 'teacher') {
+      userModel = this.databaseService.repositories.teacherModel;
+    } else if (userType === 'student') {
+      userModel = this.databaseService.repositories.studentModel;
+    } else if (userType === 'parent') {
+      userModel = this.databaseService.repositories.parentModel;
+    } else {
+      throw new UnauthorizedException('Invalid user type');
+    }
+
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+ 
+    if (user.otp !== otp) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+
+    const now = new Date();
+    if (!user.otpExpiresAt || now > user.otpExpiresAt) {
+      throw new UnauthorizedException('OTP has expired');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.otp = null;
+    user.otpExpiresAt = null;
+    await user.save();
+
+    return {
+      message: 'Your password has been changed successfully',
+    };
+  } catch (error) {
+    throw new UnauthorizedException(error.message || 'Password reset failed');
+  }
+}
+
+async resendOtpForResetPassword(email: string, userType: string) {
+  try {
+
+    let userModel;
+
+
+    if (userType === 'teacher') {
+      userModel = this.databaseService.repositories.teacherModel;
+    } 
+    else if (userType === 'student') {
+      userModel = this.databaseService.repositories.studentModel;
+    } 
+    else if (userType === 'parent') {
+      userModel = this.databaseService.repositories.parentModel;
+    } 
+    else {
+      throw new UnauthorizedException('Invalid user type');
+    }
+
+ 
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+  
+    if (!user.isVerified) {
+      throw new UnauthorizedException('User is not verified yet');
+    }
+
+
+    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    user.otp = newOtp;
+    user.otpExpiresAt = otpExpiresAt;
+    await user.save();
+
+
+    await this.otpService.sendOtp(user.email, newOtp);
+
+    return {
+      message: 'OTP sent successfully to your email for password reset',
+      data: {
+        userId: user._id,
+        otp: user.otp, 
+      },
+    };
+
+  } catch (error) {
+    throw new UnauthorizedException(error.message || 'Resend OTP for password reset failed');
+  }
+}
+
+async verifyOtpForgot(email: string, userType: string, otp: string) {
+  try {
+    let userModel;
+
+    if (userType === 'teacher') {
+      userModel = this.databaseService.repositories.teacherModel;
+    } else if (userType === 'student') {
+      userModel = this.databaseService.repositories.studentModel;
+    } else if (userType === 'parent') {
+      userModel = this.databaseService.repositories.parentModel;
+    } else {
+      throw new UnauthorizedException('Invalid user type');
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+  
+    if (user.otp !== otp) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+    const now = new Date();
+    if (!user.otpExpiresAt || now > user.otpExpiresAt) {
+      throw new UnauthorizedException('OTP has expired');
+    }
+
+    return {
+      message: 'OTP verified successfully',
+      data: null,
+    };
+  } catch (error) {
+    throw new UnauthorizedException(error.message || 'OTP verification failed');
   }
 }
 

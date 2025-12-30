@@ -18,17 +18,17 @@ export class CreateExamDto {
 
   @IsString()
   @IsNotEmpty()
-  examType: string;  // e.g., Midterm, Final
+  examType: string;  
 
   @IsNumber()
   @IsNotEmpty()
-  totalMarks: number;  // Total marks
+  totalMarks: number;  
 
   @IsNumber()
   @IsNotEmpty()
-  passingMarks: number;  // Passing marks
+  passingMarks: number;  
 
   @IsString()
   @IsNotEmpty()
-  examMode: string;  // "Theory" or "Practical"
+  examMode: string;  
 }

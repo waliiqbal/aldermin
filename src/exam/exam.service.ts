@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DatabaseService } from 'src/database/databaseservice';
 import { Types } from 'mongoose';
 import { CreateExamDto } from './dto/createexam.dto';
+import { CreateExamScheduleDto } from './dto/createExamSchedule.dto';
 
 @Injectable()
 export class ExamService {
@@ -91,7 +92,7 @@ async getExamsByAdmin(adminId: string, query: any) {
       },
     },
 
-    // Lookup for class details
+  
     {
       $lookup: {
         from: 'classes',
@@ -102,7 +103,7 @@ async getExamsByAdmin(adminId: string, query: any) {
     },
     { $unwind: { path: '$class', preserveNullAndEmptyArrays: true } },
 
-    // Lookup for section details
+
     {
       $lookup: {
         from: 'sections',
@@ -141,6 +142,258 @@ async getExamsByAdmin(adminId: string, query: any) {
   return {
     message: 'Exams fetched successfully',
     data: exams,
+  };
+}
+
+
+async addExamSchedule(
+  createExamScheduleDto: CreateExamScheduleDto,
+  adminId: string,
+) {
+  const {
+    examId,
+    teacherId,
+    room_number,
+    duration,
+    examDate,
+    examTime,
+    day,
+  } = createExamScheduleDto;
+
+  const adminObjectId = new Types.ObjectId(adminId);
+
+  
+  const school = await this.databaseService.repositories.schoolModel.findOne({
+    admin: adminObjectId,
+  });
+
+  if (!school) {
+    throw new NotFoundException('School not found for this admin');
+  }
+
+
+  const exam = await this.databaseService.repositories.examModel.findOne({
+    _id: examId,
+    schoolId: school._id.toString(),
+    status: 'active',
+  });
+
+  if (!exam) {
+    throw new BadRequestException('Exam not found for this school');
+  }
+
+
+  const existingSchedule =
+    await this.databaseService.repositories.examScheduleModel.findOne({
+      examId,
+      examDate,
+      examTime,
+    });
+
+  if (existingSchedule) {
+    throw new BadRequestException('Exam schedule already exists');
+  }
+
+  const newSchedule =
+    await this.databaseService.repositories.examScheduleModel.create({
+      examId,
+      teacherId,
+      room_number,
+      duration,
+      examDate,
+      examTime,
+      day,
+    });
+
+
+  const cleanSchedule =
+    await this.databaseService.repositories.examScheduleModel
+      .findById(newSchedule._id)
+      .select('-__v -createdAt -updatedAt');
+
+  return {
+    message: 'Exam schedule created successfully',
+    data: cleanSchedule,
+  };
+}
+
+async getExamSchedule(
+  adminId: string,
+  page: number = 1,
+  limit: number = 10,
+  classId?: string,
+  sectionId?: string,
+  subjectId?: string,
+  examId?: string,
+) {
+  const adminObjectId = new Types.ObjectId(adminId);
+  const skip = (page - 1) * limit;
+
+
+  const school = await this.databaseService.repositories.schoolModel.findOne({
+    admin: adminObjectId,
+  });
+
+  if (!school) {
+    throw new NotFoundException('School not found for this admin');
+  }
+
+
+  const examMatch: any = {
+    schoolId: school._id.toString(),
+    status: 'active',
+  };
+
+  if (classId) examMatch.classId = classId;
+  if (sectionId) examMatch.sectionId = sectionId;
+  if (subjectId) examMatch.subjectId = subjectId;
+  if (examId) examMatch._id = new Types.ObjectId(examId);
+
+  const schedules =
+    await this.databaseService.repositories.examScheduleModel.aggregate([
+      // 1️⃣ exam lookup
+      {
+        $lookup: {
+          from: 'exams',
+          let: { examId: { $toObjectId: '$examId' } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$examId'] },
+              },
+            },
+            { $match: examMatch },
+          ],
+          as: 'exam',
+        },
+      },
+      { $unwind: '$exam' },
+
+      // 2️⃣ class lookup
+      {
+        $lookup: {
+          from: 'classes',
+          let: { classId: { $toObjectId: '$exam.classId' } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$classId'] },
+              },
+            },
+          ],
+          as: 'class',
+        },
+      },
+      { $unwind: '$class' },
+
+      // 3️⃣ section lookup
+      {
+        $lookup: {
+          from: 'sections',
+          let: { sectionId: { $toObjectId: '$exam.sectionId' } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$sectionId'] },
+              },
+            },
+          ],
+          as: 'section',
+        },
+      },
+      { $unwind: '$section' },
+
+      // 4️⃣ subject lookup
+      {
+        $lookup: {
+          from: 'subjects',
+          let: { subjectId: { $toObjectId: '$exam.subjectId' } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$subjectId'] },
+              },
+            },
+          ],
+          as: 'subject',
+        },
+      },
+      { $unwind: '$subject' },
+
+      // 5️⃣ Sort (latest first)
+      { $sort: { examDate: -1 } },
+
+      // 6️⃣ Pagination
+      { $skip: skip },
+      { $limit: limit },
+
+      // 7️⃣ Final response
+      {
+        $project: {
+          _id: 1,
+          examDate: 1,
+          examTime: 1,
+          day: 1,
+          duration: 1,
+          room_number: 1,
+
+          examType: '$exam.examType',
+          examMode: '$exam.examMode',
+          totalMarks: '$exam.totalMarks',
+          passingMarks: '$exam.passingMarks',
+
+          classId: '$exam.classId',
+          sectionId: '$exam.sectionId',
+          subjectId: '$exam.subjectId',
+
+          className: '$class.name',
+          sectionName: '$section.name',
+          subjectName: '$subject.name',
+        },
+      },
+    ]);
+
+  return {
+    message: 'Exam schedules fetched successfully',
+    page,
+    limit,
+    count: schedules.length,
+    data: schedules,
+  };
+}
+
+async addStudentMarks(body: any) {
+  const { studentId, examId, examScheduleId, examDate, totalMarks, obtainedMarks, resultStatus, isAbsent, remarks } = body;
+
+
+  const existing = await this.databaseService.repositories.studentMarksModel.findOne({
+    studentId,
+    examId,
+    examScheduleId
+  });
+
+  if (existing) {
+    throw new Error('Marks for this student in this exam already exist');
+  }
+
+
+  const studentMarks = new this.databaseService.repositories.studentMarksModel({
+    studentId,
+    examId,
+    examScheduleId,
+    examDate,
+    obtainedMarks,
+    resultStatus,
+    isAbsent: isAbsent || false,
+    remarks: remarks || '',
+    totalMarks
+  });
+
+  await studentMarks.save();
+
+  return {
+    message: 'Student marks added successfully',
+    data: studentMarks
   };
 }
 

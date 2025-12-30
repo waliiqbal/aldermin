@@ -19,9 +19,10 @@ import { ExamService } from './exam.service';
 import { AuthGuard } from '@nestjs/passport';
 import { UseGuards } from '@nestjs/common';
 import { CreateExamDto } from './dto/createexam.dto';
+import { CreateExamScheduleDto } from './dto/createExamSchedule.dto';
 
 
-@Controller('section')
+@Controller('Exam')
 export class ExamController {
   constructor(
     private readonly ExamService: ExamService,
@@ -60,6 +61,16 @@ async getExamTypes(@Req() req: any) {
 
     return this.ExamService.addExam(createExamDto, adminId);
   }
+
+  
+ @UseGuards(AuthGuard('jwt'))
+ @Post('addExamSchedule')
+  async addExamSchedule(@Body() CreateExamScheduleDto: CreateExamScheduleDto, @Req() req: any) {
+    const adminId = req.user.userId; 
+
+
+    return this.ExamService.addExamSchedule(CreateExamScheduleDto, adminId);
+  }
 @UseGuards(AuthGuard('jwt'))
 @Get('getExams')
 async getExams(@Req() req: any, @Query() query: any) {
@@ -67,6 +78,36 @@ async getExams(@Req() req: any, @Query() query: any) {
   return this.ExamService.getExamsByAdmin(adminId, query);  
 }
 
+
+@UseGuards(AuthGuard('jwt'))
+@Get('getExamScedule')
+async getExamSchedule(@Req() req: any,
+ @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('classId') classId?: string,
+    @Query('sectionId') sectionId?: string,
+    @Query('subjectId') subjectId?: string,
+     @Query('examId') examId?: string,
+
+) {
+  const adminId = req.user.userId;  
+  return this.ExamService.getExamSchedule(
+      adminId,
+      Number(page) || 1,
+      Number(limit) || 10,
+      classId,
+      sectionId,
+      subjectId,
+      examId
+
+  );
+}
+
+@UseGuards(AuthGuard('jwt'))
+@Post('addStudentMarks')
+async addStudentMarks(@Req() req: any, @Body() body: any) {
+  return this.ExamService.addStudentMarks(body);
+}
 
 }
 

@@ -22,6 +22,6 @@ export {Student, StudentDocument, StudentSchema} from '../student/student.schema
   export {Teacher, TeacherDocument, TeacherSchema} from '../teacher/teacher.schema'
   export {Exam, ExamDocument, ExamSchema} from '../exam/schema/exam.schema'
   export {ExamSchedule, ExamScheduleDocument, ExamScheduleSchema} from '../exam/schema/examschedule.schema'
-
+  export {StudentMarks, StudentMarksDocument, StudentMarksSchema} from '../exam/schema/studentMarks.schema'
 
 

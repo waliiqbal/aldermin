@@ -66,6 +66,8 @@ export class DatabaseService {
      @InjectModel(schema.ExamSchedule.name)
     private examScheduleModel: Model<schema.ExamScheduleDocument>,
 
+     @InjectModel(schema.StudentMarks.name)
+    private studentMarksModel: Model<schema.StudentMarksDocument>,
 
      ) {}
      get repositories() {
@@ -88,7 +90,8 @@ export class DatabaseService {
       attendanceModel: this.attendanceModel,
       teacherModel: this.teacherModel,
       examModel: this.examModel,
-      examScheduleModel: this.examScheduleModel
+      examScheduleModel: this.examScheduleModel,
+      studentMarksModel: this.studentMarksModel,
   
 
         };

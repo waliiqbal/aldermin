@@ -30,7 +30,8 @@ import { DatabaseService } from './databaseservice'
        { name: schema.Teacher.name, schema: schema.TeacherSchema},
        { name: schema.Exam.name, schema: schema.ExamSchema},
        { name: schema.ExamSchedule.name, schema: schema.ExamScheduleSchema},
-
+       { name: schema.StudentMarks.name, schema: schema.StudentMarksSchema},
+    
        
 
     ]),
