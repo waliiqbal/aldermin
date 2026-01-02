@@ -103,11 +103,71 @@ async getExamSchedule(@Req() req: any,
   );
 }
 
+
+
+@UseGuards(AuthGuard('jwt'))
+@Get('getResultsByYear')
+async getResultsByYear(@Req() req: any,
+ @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('classId') classId?: string,
+    @Query('sectionId') sectionId?: string,
+     @Query('examType') examType?: string,
+      @Query('year') year?: number,
+
+) {
+  const adminId = req.user.userId;  
+  return this.ExamService.getResultsByYear(
+      adminId,
+      Number(page) || 1,
+      Number(limit) || 10,
+      classId,
+      sectionId,
+      examType,
+      year
+
+
+  );
+  
+
+
+  
+}
+
 @UseGuards(AuthGuard('jwt'))
 @Post('addStudentMarks')
 async addStudentMarks(@Req() req: any, @Body() body: any) {
   return this.ExamService.addStudentMarks(body);
 }
+
+@UseGuards(AuthGuard('jwt'))
+@Get('getResultsByStudent')
+async getResultsByStudent(@Req() req: any,
+    @Query('classId') classId?: string,
+    @Query('sectionId') sectionId?: string,
+     @Query('studentId') studentId?: string,
+     @Query('examType') examType?: string,
+      @Query('year') year?: number,
+
+) {
+  const adminId = req.user.userId;  
+  return this.ExamService.getResultsByStudent(
+      adminId,
+      classId,
+      sectionId,
+      studentId,
+      examType,
+      year,
+
+
+  );
+  
+
+
+  
+}
+
+
 
 }
 

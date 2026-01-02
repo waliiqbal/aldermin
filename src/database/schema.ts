@@ -25,3 +25,4 @@ export {Student, StudentDocument, StudentSchema} from '../student/student.schema
   export {StudentMarks, StudentMarksDocument, StudentMarksSchema} from '../exam/schema/studentMarks.schema'
 
 
+

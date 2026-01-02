@@ -391,7 +391,7 @@ async resendOtpForResetPassword(email: string, userType: string) {
 
 
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
     user.otp = newOtp;
     user.otpExpiresAt = otpExpiresAt;

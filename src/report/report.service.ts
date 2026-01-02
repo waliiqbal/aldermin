@@ -57,7 +57,7 @@ async getReportsByAdmin(
   const school = await this.databaseService.repositories.schoolModel.findOne({ admin: adminObjectId });
   if (!school) throw new NotFoundException("School not found for this admin");
 
-  const schoolId = school._id.toString();  // Ensure schoolId is a string
+  const schoolId = school._id.toString();  
 
   const match: any = { schoolId };
 

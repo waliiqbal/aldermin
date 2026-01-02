@@ -3,6 +3,8 @@ import { DatabaseService } from 'src/database/databaseservice';
 import { Types } from 'mongoose';
 import { CreateExamDto } from './dto/createexam.dto';
 import { CreateExamScheduleDto } from './dto/createExamSchedule.dto';
+import e from 'express';
+import { ExamSchedule } from './schema/examschedule.schema';
 
 @Injectable()
 export class ExamService {
@@ -269,7 +271,7 @@ async getExamSchedule(
       },
       { $unwind: '$exam' },
 
-      // 2️⃣ class lookup
+   
       {
         $lookup: {
           from: 'classes',
@@ -286,7 +288,7 @@ async getExamSchedule(
       },
       { $unwind: '$class' },
 
-      // 3️⃣ section lookup
+
       {
         $lookup: {
           from: 'sections',
@@ -303,7 +305,7 @@ async getExamSchedule(
       },
       { $unwind: '$section' },
 
-      // 4️⃣ subject lookup
+
       {
         $lookup: {
           from: 'subjects',
@@ -320,14 +322,14 @@ async getExamSchedule(
       },
       { $unwind: '$subject' },
 
-      // 5️⃣ Sort (latest first)
+  
       { $sort: { examDate: -1 } },
 
-      // 6️⃣ Pagination
+   
       { $skip: skip },
       { $limit: limit },
 
-      // 7️⃣ Final response
+ 
       {
         $project: {
           _id: 1,
@@ -363,7 +365,7 @@ async getExamSchedule(
 }
 
 async addStudentMarks(body: any) {
-  const { studentId, examId, examScheduleId, examDate, totalMarks, obtainedMarks, resultStatus, isAbsent, remarks } = body;
+  const { studentId, examId, teacherId, examScheduleId, examDate, totalMarks, obtainedMarks, resultStatus, isAbsent, remarks } = body;
 
 
   const existing = await this.databaseService.repositories.studentMarksModel.findOne({
@@ -380,6 +382,7 @@ async addStudentMarks(body: any) {
   const studentMarks = new this.databaseService.repositories.studentMarksModel({
     studentId,
     examId,
+    teacherId,
     examScheduleId,
     examDate,
     obtainedMarks,
@@ -397,6 +400,298 @@ async addStudentMarks(body: any) {
   };
 }
 
+async getResultsByYear(
+  adminId: string,  
+  page: number = 1,
+  limit: number = 10,
+  classId?: string,
+  sectionId?: string,
+  examType?: string,
+  year?: number,
+) {
+  const adminObjectId = new Types.ObjectId(adminId);
+  const skip = (page - 1) * limit;
 
-  
+
+  const school = await this.databaseService.repositories.schoolModel.findOne({
+    admin: adminObjectId,
+  });
+
+  if (!school) {
+    throw new NotFoundException('School not found for this admin');
   }
+
+
+  const startDate = new Date(`${year}-01-01`);
+  const endDate = new Date(`${year}-12-31`);
+
+  console.log("wali")
+
+  const exams = await this.databaseService.repositories.examModel.find({
+    schoolId: school._id.toString(),
+    classId,
+    sectionId,
+    examType, 
+  });
+
+  console.log(classId, sectionId, examType)
+
+  console.log(exams)
+
+  if (!exams || exams.length === 0) {
+    return [];
+  }
+
+  const examIds = [...new Set(exams.map(exam => exam._id.toString()))];
+
+
+
+
+  const studentMarks = await this.databaseService.repositories.studentMarksModel.aggregate([
+    {
+      $match: {
+        examId: { $in: examIds },  
+        examDate: { $gte: startDate, $lte: endDate },  
+      },
+    },
+    {
+      $group: {
+        _id: '$studentId',  
+        totalMarksObtained: { $sum: '$obtainedMarks' },  
+        totalMarks: { $sum: '$totalMarks' },  
+        totalSubjects: { $sum: 1 }, 
+      },
+    },
+    {
+      $lookup: {
+        from: 'students',  
+        let: { studentId: { $toObjectId: '$_id' } },  
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$_id', '$$studentId'] },  
+            },
+          },
+        ],
+        as: 'student',
+      },
+    },
+    { $unwind: '$student' },  
+    {
+      $lookup: {
+        from: 'classes', 
+        let: { classId: { $toObjectId: classId } }, 
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$_id', '$$classId'] }, 
+            },
+          },
+        ],
+        as: 'class',  
+      },
+    },
+    { $unwind: '$class' },  
+    {
+      $lookup: {
+        from: 'sections',  
+        let: { sectionId: { $toObjectId: sectionId } },  
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$_id', '$$sectionId'] },  
+            },
+          },
+        ],
+        as: 'section', 
+      },
+    },
+    { $unwind: '$section' },  
+    {
+      $project: {
+        studentId: '$_id',  
+        studentName: '$student.firstName',  
+        className: '$class.name',  
+        sectionName: '$section.name',  
+        totalMarksObtained: 1,  
+        totalMarks: 1,  
+        totalSubjects: 1, 
+        percentage: {
+          $cond: {
+            if: { $eq: ['$totalMarks', 0] },
+            then: 0,
+            else: { $multiply: [{ $divide: ['$totalMarksObtained', '$totalMarks'] }, 100] },
+          },
+        },
+      },
+    },
+
+    { $skip: skip },
+    { $limit: limit },
+  ]);
+
+
+
+  return {
+    message: 'Results fetched successfully',
+    page,
+    limit,
+    count: studentMarks.length,
+    data: studentMarks,
+  };
+}
+
+async getResultsByStudent(
+  adminId: string,
+  classId: string, 
+  sectionId?: string,
+  studentId?: string,
+  examType?: string , 
+  year?: number ,  
+) {
+  const adminObjectId = new Types.ObjectId(adminId);
+
+
+  const school = await this.databaseService.repositories.schoolModel.findOne({
+    admin: adminObjectId,
+  });
+
+  if (!school) {
+    throw new NotFoundException('School not found for this admin');
+  }
+
+
+  const startDate = new Date(`${year}-01-01`);
+  const endDate = new Date(`${year}-12-31`);
+
+
+  const exams = await this.databaseService.repositories.examModel.find({
+    schoolId: school._id.toString(),
+    classId,
+    sectionId,
+    examType,
+  });
+
+    console.log(adminId, studentId, classId, sectionId, examType, year );
+
+  if (!exams || exams.length === 0) {
+    return [];
+  }
+
+
+
+
+  const examIds = [...new Set(exams.map(exam => exam._id.toString()))];
+
+
+console.log(examIds);
+
+  const studentMarks = await this.databaseService.repositories.studentMarksModel.aggregate([
+    {
+      $match: {
+        studentId: studentId,  
+        examId: { $in: examIds }, 
+        examDate: { $gte: startDate, $lte: endDate }, 
+      },
+    },
+    
+    {
+  $addFields: {
+    studentObjectId: { $toObjectId: "$studentId" },
+    examObjectId: { $toObjectId: "$examId" },
+  }
+},
+
+
+
+    {
+      $lookup: {
+        from: 'students',
+        localField: 'studentObjectId',
+        foreignField: '_id',
+        as: 'student'
+      }
+    },
+    { $unwind: '$student' },
+
+
+
+      
+
+    {
+      $lookup: {
+        from: 'exams',
+        localField: 'examObjectId',
+        foreignField: '_id',
+        as: 'exam'
+      }
+    },
+    { $unwind: '$exam' },
+
+    
+
+    {
+      $lookup: {
+        from: 'classes',
+        let: { classIdVar: { $toObjectId: "$exam.classId" } },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$_id", "$$classIdVar"] } } }
+        ],
+        as: 'class',
+      }
+    },
+    { $unwind: '$class' },
+
+
+    {
+      $lookup: {
+        from: 'sections',
+        let: { sectionIdVar: { $toObjectId: "$exam.sectionId" } },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$_id", "$$sectionIdVar"] } } }
+        ],
+        as: 'section',
+      }
+    },
+    { $unwind: '$section' },
+
+
+    {
+      $lookup: {
+        from: 'subjects',
+        let: { subjectIdVar: { $toObjectId: "$exam.subjectId" } },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$_id", "$$subjectIdVar"] } } }
+        ],
+        as: 'subject',
+      }
+    },
+    { $unwind: '$subject' },
+
+    {
+      $project: {
+        _id: 0,
+        studentId: 1,
+        studentName: '$student.firstName',
+        examId: 1,
+        examType: '$exam.examType',
+        className: '$class.name',
+        sectionName: '$section.name',
+        subjectName: '$subject.name',
+  
+        obtainedMarks: 1,
+        examDate: 1,
+        totalMarks: 1,
+      }
+    }
+  ]);
+
+  console.log('AGGREGATION RESULT COUNT:', studentMarks.length);
+  console.log('AGGREGATION RESULT DATA:', studentMarks);
+
+  return {
+    message: 'Results fetched successfully',
+    data: studentMarks,
+  };
+}
+}
