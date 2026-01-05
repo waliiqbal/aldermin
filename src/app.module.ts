@@ -20,6 +20,7 @@ import { SubjectModule } from './subject/subject.module';
 import { HomeworkModule } from './homework/homework.module';
 import { attendanceModule } from './Attendance/attendance.module';
 import { ExamModule } from './exam/exam.module';
+import { AdmissionQueryModule } from './admissionQuery/admissionQuery.Module';
 
 
 @Module({
@@ -42,7 +43,8 @@ import { ExamModule } from './exam/exam.module';
     SubjectModule,
     HomeworkModule,
     attendanceModule,
-    ExamModule
+    ExamModule,
+    AdmissionQueryModule,
 
 
 

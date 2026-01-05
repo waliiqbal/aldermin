@@ -23,6 +23,7 @@ export {Student, StudentDocument, StudentSchema} from '../student/student.schema
   export {Exam, ExamDocument, ExamSchema} from '../exam/schema/exam.schema'
   export {ExamSchedule, ExamScheduleDocument, ExamScheduleSchema} from '../exam/schema/examschedule.schema'
   export {StudentMarks, StudentMarksDocument, StudentMarksSchema} from '../exam/schema/studentMarks.schema'
+export {AdmissionQuery, AdmissionQueryDocument, AdmissionQuerySchema} from '../admissionQuery/admissionQuerySchema'
 
 
 

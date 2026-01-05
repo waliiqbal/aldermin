@@ -1,4 +1,4 @@
-/* eslint-disable prettier/prettier */
+
 import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
@@ -31,6 +31,9 @@ import { DatabaseService } from './databaseservice'
        { name: schema.Exam.name, schema: schema.ExamSchema},
        { name: schema.ExamSchedule.name, schema: schema.ExamScheduleSchema},
        { name: schema.StudentMarks.name, schema: schema.StudentMarksSchema},
+       { name: schema.StudentMarks.name, schema: schema.StudentMarksSchema},
+       { name: schema.AdmissionQuery.name, schema: schema.AdmissionQuerySchema},
+
     
        
 

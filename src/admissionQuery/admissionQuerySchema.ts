@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type ExamDocument = AdmissionQuery & Document;
+export type AdmissionQueryDocument = AdmissionQuery & Document;
 
 @Schema({ timestamps: true })
 export class AdmissionQuery {
@@ -19,8 +19,8 @@ export class AdmissionQuery {
   @Prop({ type: String })
   name: string;  
 
-  @Prop({ type: Number })
-  email: number;
+  @Prop({ type:  String })
+  email: string;
 
   @Prop({ type: Number })
   phone: number;
@@ -42,7 +42,7 @@ export class AdmissionQuery {
   numberOfChild: number; 
 
 
-    @Prop({ type: String, default: "active"  })
+    @Prop({ type: String, default: "pending"  })
   status: string;
 
 

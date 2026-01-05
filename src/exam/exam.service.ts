@@ -543,15 +543,15 @@ async getResultsByYear(
 
 async getResultsByStudent(
   adminId: string,
-  classId: string, 
+  classId: string,
   sectionId?: string,
   studentId?: string,
-  examType?: string , 
-  year?: number ,  
+  examType?: string,
+  year?: number,
 ) {
   const adminObjectId = new Types.ObjectId(adminId);
 
-
+  // 1️⃣ FIND SCHOOL
   const school = await this.databaseService.repositories.schoolModel.findOne({
     admin: adminObjectId,
   });
@@ -560,11 +560,11 @@ async getResultsByStudent(
     throw new NotFoundException('School not found for this admin');
   }
 
-
+  // 2️⃣ DATE RANGE
   const startDate = new Date(`${year}-01-01`);
   const endDate = new Date(`${year}-12-31`);
 
-
+  // 3️⃣ FIND EXAMS
   const exams = await this.databaseService.repositories.examModel.find({
     schoolId: school._id.toString(),
     classId,
@@ -572,126 +572,179 @@ async getResultsByStudent(
     examType,
   });
 
-    console.log(adminId, studentId, classId, sectionId, examType, year );
-
-  if (!exams || exams.length === 0) {
-    return [];
+  if (!exams.length) {
+    return {
+      message: 'No exams found',
+      data: [],
+    };
   }
 
+  const examIds = exams.map(exam => exam._id.toString());
 
-
-
-  const examIds = [...new Set(exams.map(exam => exam._id.toString()))];
-
-
-console.log(examIds);
-
-  const studentMarks = await this.databaseService.repositories.studentMarksModel.aggregate([
-    {
-      $match: {
-        studentId: studentId,  
-        examId: { $in: examIds }, 
-        examDate: { $gte: startDate, $lte: endDate }, 
+  // 4️⃣ AGGREGATION PIPELINE
+  const studentMarks =
+    await this.databaseService.repositories.studentMarksModel.aggregate([
+      // MATCH
+      {
+        $match: {
+          studentId: studentId,
+          examId: { $in: examIds },
+          examDate: { $gte: startDate, $lte: endDate },
+        },
       },
-    },
-    
-    {
-  $addFields: {
-    studentObjectId: { $toObjectId: "$studentId" },
-    examObjectId: { $toObjectId: "$examId" },
-  }
-},
 
+      // CONVERT IDS
+      {
+        $addFields: {
+          studentObjectId: { $toObjectId: '$studentId' },
+          examObjectId: { $toObjectId: '$examId' },
+          examScheduleObjectId: {
+            $cond: [
+              { $ifNull: ['$examScheduleId', false] },
+              { $toObjectId: '$examScheduleId' },
+              null,
+            ],
+          },
+        },
+      },
 
+      // STUDENT LOOKUP
+      {
+        $lookup: {
+          from: 'students',
+          localField: 'studentObjectId',
+          foreignField: '_id',
+          as: 'student',
+        },
+      },
+      { $unwind: '$student' },
 
-    {
-      $lookup: {
-        from: 'students',
-        localField: 'studentObjectId',
-        foreignField: '_id',
-        as: 'student'
-      }
-    },
-    { $unwind: '$student' },
+      // EXAM SCHEDULE LOOKUP
+      {
+        $lookup: {
+          from: 'examschedules', // ⚠️ actual collection name
+          localField: 'examScheduleObjectId',
+          foreignField: '_id',
+          as: 'examSchedule',
+        },
+      },
+      {
+        $unwind: {
+          path: '$examSchedule',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
 
+      // TEACHER OBJECT ID
+      {
+        $addFields: {
+          teacherObjectId: {
+            $cond: [
+              { $ifNull: ['$examSchedule.teacherId', false] },
+              { $toObjectId: '$examSchedule.teacherId' },
+              null,
+            ],
+          },
+        },
+      },
 
+      // TEACHER LOOKUP
+      {
+        $lookup: {
+          from: 'teachers', // ⚠️ confirm collection name
+          localField: 'teacherObjectId',
+          foreignField: '_id',
+          as: 'teacher',
+        },
+      },
+      {
+        $unwind: {
+          path: '$teacher',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
 
-      
+      // EXAM LOOKUP
+      {
+        $lookup: {
+          from: 'exams',
+          localField: 'examObjectId',
+          foreignField: '_id',
+          as: 'exam',
+        },
+      },
+      { $unwind: '$exam' },
 
-    {
-      $lookup: {
-        from: 'exams',
-        localField: 'examObjectId',
-        foreignField: '_id',
-        as: 'exam'
-      }
-    },
-    { $unwind: '$exam' },
+      // CLASS LOOKUP
+      {
+        $lookup: {
+          from: 'classes',
+          let: { classIdVar: { $toObjectId: '$exam.classId' } },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$classIdVar'] } } },
+          ],
+          as: 'class',
+        },
+      },
+      { $unwind: '$class' },
 
-    
+      // SECTION LOOKUP
+      {
+        $lookup: {
+          from: 'sections',
+          let: { sectionIdVar: { $toObjectId: '$exam.sectionId' } },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$sectionIdVar'] } } },
+          ],
+          as: 'section',
+        },
+      },
+      { $unwind: '$section' },
 
-    {
-      $lookup: {
-        from: 'classes',
-        let: { classIdVar: { $toObjectId: "$exam.classId" } },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$_id", "$$classIdVar"] } } }
-        ],
-        as: 'class',
-      }
-    },
-    { $unwind: '$class' },
+      // SUBJECT LOOKUP
+      {
+        $lookup: {
+          from: 'subjects',
+          let: { subjectIdVar: { $toObjectId: '$exam.subjectId' } },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$subjectIdVar'] } } },
+          ],
+          as: 'subject',
+        },
+      },
+      { $unwind: '$subject' },
 
+      // FINAL RESPONSE
+      {
+        $project: {
+          _id: 0,
+          studentName: '$student.firstName',
+          examType: '$exam.examType',
+          className: '$class.name',
+          sectionName: '$section.name',
+          subjectName: '$subject.name',
 
-    {
-      $lookup: {
-        from: 'sections',
-        let: { sectionIdVar: { $toObjectId: "$exam.sectionId" } },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$_id", "$$sectionIdVar"] } } }
-        ],
-        as: 'section',
-      }
-    },
-    { $unwind: '$section' },
+          examScheduleRoom: {
+            $ifNull: ['$examSchedule.room_number', null],
+          },
 
+          teacherName: {
+            $ifNull: ['$teacher.name', null],
+          },
 
-    {
-      $lookup: {
-        from: 'subjects',
-        let: { subjectIdVar: { $toObjectId: "$exam.subjectId" } },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$_id", "$$subjectIdVar"] } } }
-        ],
-        as: 'subject',
-      }
-    },
-    { $unwind: '$subject' },
-
-    {
-      $project: {
-        _id: 0,
-        studentId: 1,
-        studentName: '$student.firstName',
-        examId: 1,
-        examType: '$exam.examType',
-        className: '$class.name',
-        sectionName: '$section.name',
-        subjectName: '$subject.name',
-  
-        obtainedMarks: 1,
-        examDate: 1,
-        totalMarks: 1,
-      }
-    }
-  ]);
-
-  console.log('AGGREGATION RESULT COUNT:', studentMarks.length);
-  console.log('AGGREGATION RESULT DATA:', studentMarks);
+          obtainedMarks: 1,
+          totalMarks: 1,
+          examDate: 1,
+        },
+      },
+    ]);
 
   return {
     message: 'Results fetched successfully',
     data: studentMarks,
   };
 }
+
+
+
 }
