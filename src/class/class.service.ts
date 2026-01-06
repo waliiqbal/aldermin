@@ -64,7 +64,8 @@ export class ClassService {
 
 
   const classes = await this.databaseService.repositories.classModel
-    .find({ schoolId: school._id })
+    .find({ schoolId: school._id, isActive: true })
+    
     .select('-__v -createdAt -updatedAt');
 
   return {
@@ -74,3 +75,5 @@ export class ClassService {
 }
 
 }
+
+

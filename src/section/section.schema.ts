@@ -9,6 +9,9 @@ export class Section {
     @Prop()
   classId: string;
 
+      @Prop()
+  teacherId: string;
+
 
      @Prop()
   schoolId: string;

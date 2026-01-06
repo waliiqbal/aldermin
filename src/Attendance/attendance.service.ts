@@ -160,10 +160,10 @@ async getAttendance(
       }
     },
 
-    { $sort: { date: -1 } },  // Sorting by date (newest first)
+    { $sort: { date: -1 } },  
 
-    { $skip: skip },  // Pagination: skip the first `skip` records
-    { $limit: limit }  // Limit the result to the `limit`
+    { $skip: skip },  
+    { $limit: limit }  
   ];
 
   const data = await this.databaseService.repositories.attendanceModel.aggregate(pipeline);

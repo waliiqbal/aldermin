@@ -6,19 +6,29 @@ export type SubjectDocument = Subject & Document;
 @Schema({ timestamps: true })
 export class Subject {
 
-     @Prop()
-  classId: string;
-
-      @Prop()
-  schoolId: string;
-
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   name: string; 
 
-
   @Prop()
-  description: string;
+  description: string;  
 
-  }
+  @Prop({ required: true })
+  classId: string;  
+
+  @Prop({ required: true })
+  schoolId: string;
+
+  @Prop({
+    type: [{
+      teacherId: { type: String },  
+      sectionId: { type: String }  
+    }],
+    default: []
+  })
+  subjectAssignments: { teacherId: string, sectionId: string }[];  
+
+  @Prop({ default: true })
+  isActive: boolean;  
+}
 
 export const SubjectSchema = SchemaFactory.createForClass(Subject);

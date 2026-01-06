@@ -22,7 +22,7 @@ import { UseGuards } from '@nestjs/common';
 @Controller('section')
 export class SectionController {
   constructor(
-    private readonly classService: SectionService,
+    private readonly sectionService: SectionService,
 
 
   ) {}
@@ -32,7 +32,7 @@ export class SectionController {
  async addSection(@Req() req: any, @Body() body: any) {
    const adminId = req.user.userId;
 
-   return this.classService.addSection(body, adminId);
+   return this.sectionService.addSection(body, adminId);
 
 }
 
@@ -40,8 +40,28 @@ export class SectionController {
 @Get('getAllSections')
 async getAllSections(@Req() req: any, @Query('classId') classId?: string) {
   const adminId = req.user.userId;
-  return this.classService.getAllSectionsByAdmin(adminId, classId);
+  return this.sectionService.getAllSectionsByAdmin(adminId, classId);
 }
 
+@UseGuards(AuthGuard('jwt'))
+  @Post('assignClassTeacher')
+  async assignClassTeacher(
+    @Req() req: any, 
+    @Body() body: any
+  ) {
+    const adminId = req.user.userId;
+    return this.sectionService.assignClassTeacher(body, adminId);
+  }
+
+   @UseGuards(AuthGuard('jwt'))
+  @Post('editSection')
+  async editSection(@Req() req: any, @Body() body: any) {
+    const adminId = req.user.userId; 
+
+ 
+    return this.sectionService.editSection(body, adminId);
+  }
+
+  
 
 }

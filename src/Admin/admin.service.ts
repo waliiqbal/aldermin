@@ -386,7 +386,7 @@ async resetPassword(email: string, otp: string, newPassword: string) {
 
     
    if (admin.otp !== otp.toString()) {
-  console.log("DB OTP:", admin.otp, " Provided OTP:", otp); // Debugging
+  console.log("DB OTP:", admin.otp, " Provided OTP:", otp); 
   throw new UnauthorizedException('Invalid OTP');
 }
 
@@ -410,6 +410,29 @@ async resetPassword(email: string, otp: string, newPassword: string) {
     };
   } catch (error) {
     throw new UnauthorizedException(error.message || 'Password reset failed');
+  }
+}
+
+async logoutAdmin(adminId: string) {
+  try {
+
+    const admin = await this.databaseService.repositories.adminModel.findById(adminId);
+    
+    if (!admin) {
+      throw new UnauthorizedException('Admin not found');
+    }
+
+    admin.refreshToken = null;
+    admin.refreshTokenExpiresAt = null;
+
+
+    await admin.save();
+
+    return {
+      message: 'Logout successful',
+    };
+  } catch (error) {
+    throw new UnauthorizedException(error.message || 'Logout failed');
   }
 }
 

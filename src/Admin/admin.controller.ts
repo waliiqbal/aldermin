@@ -90,4 +90,11 @@ async createAdminAndSchool(@Req() req, @Body() body: any) {
 
     return this.adminService.resetPassword(email, otp, newPassword);
   }
+
+  @UseGuards(AuthGuard('jwt'))
+      @Post('logout')
+    async logout(@Req() req: any) {
+      const  adminId  = req.user.userId; 
+      return this.adminService.logoutAdmin(adminId);
+    }
 }
