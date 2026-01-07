@@ -11,13 +11,15 @@ import { JwtStrategy } from './jwt.strategy'
 import { OtpModule } from 'src/otp/otp.module';
 
 import { User, UserSchema } from '../user/schema/user.schema';
+import { RedisModule } from 'src/redis/redis.module';
+import { JwtAuthGuard } from './guard/jwt-auth.guard';
 
 @Module({
   imports: [
    
     ConfigModule,
      OtpModule,
-    
+    RedisModule,
     PassportModule,
 
   
@@ -34,7 +36,7 @@ import { User, UserSchema } from '../user/schema/user.schema';
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService], 
+  providers: [AuthService, JwtStrategy, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard], 
 })
 export class AuthModule {}

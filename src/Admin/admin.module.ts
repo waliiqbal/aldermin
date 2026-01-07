@@ -7,6 +7,7 @@ import { PassportModule } from '@nestjs/passport';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OtpModule } from 'src/otp/otp.module';
+import { RedisModule } from 'src/redis/redis.module';
 
 
 
@@ -16,6 +17,8 @@ import { OtpModule } from 'src/otp/otp.module';
   imports: [
      OtpModule,
     ConfigModule,
+    RedisModule,
+
 
 
     

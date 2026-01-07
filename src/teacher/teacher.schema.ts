@@ -29,7 +29,6 @@ export class Teacher {
   status: string;
  
 
-
 }
 
 export const TeacherSchema = SchemaFactory.createForClass(Teacher);

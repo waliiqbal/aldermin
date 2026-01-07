@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 // import { UsersModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { OtpModule } from './otp/otp.module';
+import { RedisModule } from './redis/redis.module';
 import { AdminModule } from './Admin/admin.module';
 import { ClassModule } from './class/class.module';
 import { SectionModule } from './section/section.module';
@@ -45,6 +46,7 @@ import { AdmissionQueryModule } from './admissionQuery/admissionQuery.Module';
     attendanceModule,
     ExamModule,
     AdmissionQueryModule,
+    RedisModule,
 
 
 

@@ -14,6 +14,7 @@ import {
 import { ClassService } from './class.service';
 import { AuthGuard } from '@nestjs/passport';
 import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 
 
 @Controller('Class')
@@ -33,7 +34,7 @@ async addClass(@Req() req: any, @Body() body: any) {
   return this.classService.addClass(body, adminId);
 }
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 @Get('getClasses')
 async getClasses(@Req() req: any) {
   const adminId = req.user.userId;

@@ -14,12 +14,15 @@ import {
 import { AdminService } from './admin.service'
 import { AuthGuard } from '@nestjs/passport';
 import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RedisService } from 'src/redis/redis.service';
 
 
 @Controller('Admin')
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
+    private readonly redisService: RedisService
 
   ) {}
 
@@ -76,7 +79,7 @@ async createAdminAndSchool(@Req() req, @Body() body: any) {
     return this.adminService.forgotPasswordService(email);
   }
   
-    @UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
   @Post('resend-otp')
   async resendotp(@Req() req) {
     const email = req.user.email;
@@ -91,10 +94,16 @@ async createAdminAndSchool(@Req() req, @Body() body: any) {
     return this.adminService.resetPassword(email, otp, newPassword);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-      @Post('logout')
-    async logout(@Req() req: any) {
-      const  adminId  = req.user.userId; 
-      return this.adminService.logoutAdmin(adminId);
-    }
+@UseGuards(JwtAuthGuard)
+@Post('logout')
+async logout(@Req() req) {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (token) {
+    await this.redisService.del(token);
+  }
+
+  return this.adminService.logoutAdmin(req.user.userId);
+}
+
 }

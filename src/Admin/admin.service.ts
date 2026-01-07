@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from "src/database/databaseservice";
 import { OtpService } from 'src/otp/otp.service';
 import * as crypto from 'crypto';
+import { RedisService } from 'src/redis/redis.service';
 
 import { Types } from 'mongoose';
 
@@ -20,7 +21,9 @@ export class AdminService {
     private databaseService: DatabaseService,
     private readonly otpService: OtpService, 
 
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly redisService: RedisService
+
   ) {}
   
    async createSuperadmin(body: any) {
@@ -137,6 +140,8 @@ async loginAdmin(loginData: any) {
       { expiresIn: '30m' } 
     );
 
+    
+
 
     const refreshToken = this.jwtService.sign(
       {
@@ -146,6 +151,13 @@ async loginAdmin(loginData: any) {
       },
       { expiresIn: '30d' } 
     );
+
+    await this.redisService.set(
+  accessToken,
+  admin._id.toString(),
+  15 * 60, 
+);
+
 
   
     admin.refreshToken = refreshToken;
@@ -427,6 +439,8 @@ async logoutAdmin(adminId: string) {
 
 
     await admin.save();
+
+    
 
     return {
       message: 'Logout successful',
