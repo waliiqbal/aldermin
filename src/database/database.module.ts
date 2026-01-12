@@ -33,6 +33,10 @@ import { DatabaseService } from './databaseservice'
        { name: schema.StudentMarks.name, schema: schema.StudentMarksSchema},
        { name: schema.StudentMarks.name, schema: schema.StudentMarksSchema},
        { name: schema.AdmissionQuery.name, schema: schema.AdmissionQuerySchema},
+       { name: schema.Complaint.name, schema: schema.ComplaintSchema},
+       { name: schema.Visitor.name, schema: schema.VisitorSchema},
+        { name: schema.Postal.name, schema: schema.PostalSchema},
+        { name: schema.PhoneCall.name, schema: schema.PhoneCallSchema},
 
     
        

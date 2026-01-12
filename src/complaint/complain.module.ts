@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
-import { ClassController } from './class.controller';
-import { ClassService } from './class.service';
+import { ComplainService } from './complain.service';
+import { ComplainController } from './complain.controller';
 import { AuthModule } from 'src/auth/auth.module';  
 import { RedisModule } from 'src/redis/redis.module';  
 
@@ -11,10 +11,10 @@ import { RedisModule } from 'src/redis/redis.module';
 @Module({
  
    imports: [AuthModule, RedisModule], 
-  controllers: [ClassController],
-  providers: [ClassService], 
-  exports: [ClassService], 
+  controllers: [ComplainController],
+  providers: [ComplainService], 
+  exports: [ComplainService], 
 
 })
 
-export class ClassModule {}
+export class ComplainModule {}

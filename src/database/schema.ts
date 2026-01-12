@@ -24,6 +24,10 @@ export {Student, StudentDocument, StudentSchema} from '../student/student.schema
   export {ExamSchedule, ExamScheduleDocument, ExamScheduleSchema} from '../exam/schema/examschedule.schema'
   export {StudentMarks, StudentMarksDocument, StudentMarksSchema} from '../exam/schema/studentMarks.schema'
 export {AdmissionQuery, AdmissionQueryDocument, AdmissionQuerySchema} from '../admissionQuery/admissionQuerySchema'
+export {Complaint, ComplaintDocument, ComplaintSchema} from '../complaint/complain.schema'
+export {Visitor, VisitorDocument, VisitorSchema} from '../visitor/visitor.schema'
+export {Postal, PostalDocument, PostalSchema} from '../postal/postal.schema'
+export {PhoneCall, PhoneCallDocument, PhoneCallSchema} from '../phoneCall/phoneCall.schema'
 
 
 

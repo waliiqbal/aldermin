@@ -72,6 +72,18 @@ export class DatabaseService {
       @InjectModel(schema.AdmissionQuery.name)
     private admissionQueryModel: Model<schema.AdmissionQueryDocument>,
 
+          @InjectModel(schema.Complaint.name)
+    private complainModel: Model<schema.ComplaintDocument>,
+
+        @InjectModel(schema.Visitor.name)     
+    private visitorModel: Model<schema.VisitorDocument>,
+
+        @InjectModel(schema.Postal.name)     
+    private postalModel: Model<schema.PostalDocument>,
+    
+        @InjectModel(schema.PhoneCall.name)     
+    private phoneCallModel: Model<schema.PhoneCallDocument>,
+
      ) {}
      get repositories() {
     return {
@@ -96,6 +108,10 @@ export class DatabaseService {
       examScheduleModel: this.examScheduleModel,
       studentMarksModel: this.studentMarksModel,
       admissionQueryModel :this.admissionQueryModel,  
+      complainModel: this.complainModel,
+      visitorModel: this.visitorModel,
+      postalModel: this.postalModel,
+      phoneCallModel: this.phoneCallModel,
   
 
         };

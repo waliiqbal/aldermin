@@ -12,6 +12,8 @@ import { OtpService } from 'src/otp/otp.service';
 import { DatabaseService } from "src/database/databaseservice";
 import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
+import { stat } from 'fs';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,7 @@ export class AuthService {
    
     private databaseService: DatabaseService,
       private readonly otpService: OtpService, 
+      private readonly redisService: RedisService,
 
     private readonly jwtService: JwtService
   ) {}
@@ -63,6 +66,7 @@ async signup(signupDto: SignupDto) {
       otp,
       otpExpiresAt,
       isVerified: false,
+      status: 'active',
     });
 
     await user.save();
@@ -128,6 +132,14 @@ async login(loginDto: LoginDto) {
     };
 
     const token = this.jwtService.sign(payload);
+
+
+    await this.redisService.set(
+      token,
+      user._id.toString(),
+      30 * 60
+    );
+    
 
     return {
       message: 'Login successful',

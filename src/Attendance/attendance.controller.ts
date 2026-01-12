@@ -46,9 +46,9 @@ async getAttendance(
   @Query('classId') classId?: string,
   @Query('sectionId') sectionId?: string,
   @Query('studentId') studentId?: string,
-  @Query('date') date?: string  // new date filter
+  @Query('date') date?: string  
 ) {
-  const adminId = req.user.userId;  // Assuming adminId comes from JWT token
+  const adminId = req.user.userId; 
 
   if (!adminId) {
     throw new BadRequestException('Invalid admin token');

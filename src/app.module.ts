@@ -6,7 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { DatabaseModule } from './database/database.module';
-// import { UsersModule } from './user/user.module';
+
 import { AuthModule } from './auth/auth.module';
 import { OtpModule } from './otp/otp.module';
 import { RedisModule } from './redis/redis.module';
@@ -22,6 +22,10 @@ import { HomeworkModule } from './homework/homework.module';
 import { attendanceModule } from './Attendance/attendance.module';
 import { ExamModule } from './exam/exam.module';
 import { AdmissionQueryModule } from './admissionQuery/admissionQuery.Module';
+import { ComplainModule } from './complaint/complain.module';
+import { VisitorModule } from './visitor/visitor.module';
+import { PostalModule } from './postal/postal.module';
+import { phoneCallModule } from './phoneCall/phoneCall.module';
 
 
 @Module({
@@ -47,6 +51,12 @@ import { AdmissionQueryModule } from './admissionQuery/admissionQuery.Module';
     ExamModule,
     AdmissionQueryModule,
     RedisModule,
+    ComplainModule,
+    VisitorModule,
+    PostalModule,
+    phoneCallModule,
+
+    
 
 
 

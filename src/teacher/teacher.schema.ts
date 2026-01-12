@@ -16,6 +16,13 @@ export class Teacher {
     @Prop({ required: true })
   password: string;
 
+     @Prop()
+  schoolId: string;
+
+
+    @Prop({ required: true })
+  userType: string;
+  
    @Prop()
   otp: string;
   

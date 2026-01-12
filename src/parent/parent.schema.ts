@@ -103,6 +103,15 @@ export class Parent {
 
   @Prop()
   document3File: string;
+  
+    @Prop({ default: "active" })
+  status: string;
+
+   @Prop({ required: true })
+  userType: string;
+ 
 }
+
+
 
 export const ParentSchema = SchemaFactory.createForClass(Parent);
