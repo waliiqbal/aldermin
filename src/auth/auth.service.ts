@@ -30,7 +30,7 @@ export class AuthService {
 
 async signup(signupDto: SignupDto) {
   try {
-    const { name, email, password, userType } = signupDto;
+    const { name, email, password, userType, image } = signupDto;
 
     let userModel;
 
@@ -40,9 +40,16 @@ async signup(signupDto: SignupDto) {
       userModel = this.databaseService.repositories.studentModel;
     } else if (userType === 'parent') {
       userModel = this.databaseService.repositories.parentModel;
+ 
+    }
+      else if (userType === 'adminStaff') {
+      userModel = this.databaseService.repositories.adminModel;
     } else {
       throw new UnauthorizedException('Invalid user type');
     }
+    
+
+    
 
 
     const existingUser = await userModel.findOne({ email });
@@ -63,6 +70,7 @@ async signup(signupDto: SignupDto) {
       email,
       password: hashedPassword,
       userType,
+      role: userType,
       otp,
       otpExpiresAt,
       isVerified: false,
@@ -104,6 +112,10 @@ async login(loginDto: LoginDto) {
     else if (userType === 'parent') {
       userModel = this.databaseService.repositories.parentModel;
     } 
+
+    else if (userType === 'adminStaff') {
+      userModel = this.databaseService.repositories.adminModel;
+    }
     else {
       throw new UnauthorizedException('Invalid user type');
     }
@@ -129,6 +141,7 @@ async login(loginDto: LoginDto) {
       sub: user._id,
       email: user.email,
       userType: user.userType,
+      role: user.role,
     };
 
     const token = this.jwtService.sign(payload);
@@ -148,6 +161,7 @@ async login(loginDto: LoginDto) {
         name: user.name,
         email: user.email,
         userType: user.userType,
+        role: user.role,
         token,
       },
     };
@@ -172,6 +186,10 @@ async resendOtp(email: string, userType: string) {
     else if (userType === 'parent') {
       userModel = this.databaseService.repositories.parentModel;
     } 
+
+     else if (userType === 'adminStaff') {
+      userModel = this.databaseService.repositories.adminModel;
+    }
     else {
       throw new UnauthorizedException('Invalid user type');
     }
@@ -225,6 +243,10 @@ async verifyOtp(email: string, userType: string, otp: string) {
     else if (userType === 'parent') {
       userModel = this.databaseService.repositories.parentModel;
     } 
+
+     else if (userType === 'adminStaff') {
+      userModel = this.databaseService.repositories.adminModel;
+    }
     else {
       throw new UnauthorizedException('Invalid user type');
     }
@@ -256,7 +278,7 @@ async verifyOtp(email: string, userType: string, otp: string) {
     await user.save();
 
    
-    const payload = { sub: user._id, email: user.email, userType: user.userType };
+    const payload = { sub: user._id, email: user.email, userType: user.userType, role: user.role };
     const token = this.jwtService.sign(payload, { expiresIn: '1h' });
 
     return {
@@ -291,7 +313,11 @@ async forgotPassword(email: string, userType: string) {
       userModel = this.databaseService.repositories.studentModel;
     } else if (userType === 'parent') {
       userModel = this.databaseService.repositories.parentModel;
-    } else {
+    } 
+    else if (userType === 'adminStaff') {
+      userModel = this.databaseService.repositories.adminModel;
+    } 
+    else {
       throw new UnauthorizedException('Invalid user type');
     }
 
@@ -335,7 +361,13 @@ async resetPassword(email: string, userType: string, otp: string, newPassword: s
       userModel = this.databaseService.repositories.studentModel;
     } else if (userType === 'parent') {
       userModel = this.databaseService.repositories.parentModel;
-    } else {
+    } 
+
+     else if (userType === 'adminStaff') {
+      userModel = this.databaseService.repositories.adminModel;
+    }
+    
+    else {
       throw new UnauthorizedException('Invalid user type');
     }
 
@@ -386,6 +418,10 @@ async resendOtpForResetPassword(email: string, userType: string) {
     else if (userType === 'parent') {
       userModel = this.databaseService.repositories.parentModel;
     } 
+
+     else if (userType === 'adminStaff') {
+      userModel = this.databaseService.repositories.adminModel;
+    }
     else {
       throw new UnauthorizedException('Invalid user type');
     }
@@ -435,7 +471,12 @@ async verifyOtpForgot(email: string, userType: string, otp: string) {
       userModel = this.databaseService.repositories.studentModel;
     } else if (userType === 'parent') {
       userModel = this.databaseService.repositories.parentModel;
-    } else {
+    }
+
+     else if (userType === 'adminStaff') {
+      userModel = this.databaseService.repositories.adminModel;
+    }
+     else {
       throw new UnauthorizedException('Invalid user type');
     }
 

@@ -26,6 +26,9 @@ import { ComplainModule } from './complaint/complain.module';
 import { VisitorModule } from './visitor/visitor.module';
 import { PostalModule } from './postal/postal.module';
 import { phoneCallModule } from './phoneCall/phoneCall.module';
+import { IdCardModule } from './IDCard/IDCard.module';
+import { CertificateModule } from './certificate/certificate.module';
+
 
 
 @Module({
@@ -55,7 +58,8 @@ import { phoneCallModule } from './phoneCall/phoneCall.module';
     VisitorModule,
     PostalModule,
     phoneCallModule,
-
+    IdCardModule,
+    CertificateModule,
     
 
 

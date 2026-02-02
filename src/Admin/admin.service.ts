@@ -5,6 +5,7 @@ import { DatabaseService } from "src/database/databaseservice";
 import { OtpService } from 'src/otp/otp.service';
 import * as crypto from 'crypto';
 import { RedisService } from 'src/redis/redis.service';
+import { CreateAdminDto } from './dto/addStaff.dto';
 
 import { Types } from 'mongoose';
 
@@ -256,7 +257,7 @@ async getProfile(userId: string) {
       throw new UnauthorizedException('Invalid user credentials');
     }
      const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: new mongoose.Types.ObjectId(userId) // admin field match kar raha hai
+    admin: new mongoose.Types.ObjectId(userId) 
     });
     if (!school) {
       throw new UnauthorizedException('school not found');
@@ -449,6 +450,244 @@ async logoutAdmin(adminId: string) {
     throw new UnauthorizedException(error.message || 'Logout failed');
   }
 }
+
+ async addStaff(CreateAdminDto: CreateAdminDto, adminId: string) {
+    const { role, email } = CreateAdminDto;
+
+    if (!role) {
+      throw new BadRequestException('Role is required');
+    }
+
+const adminObjectId = new Types.ObjectId(adminId);
+
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
+
+
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
+
+    let Model;
+    if (role === 'teacher') {
+      Model = this.databaseService.repositories.teacherModel;
+    } else {
+      Model = this.databaseService.repositories.adminModel;
+    }
+
+
+    const existingUser = await Model.findOne({ email, schoolId });
+    if (existingUser) {
+      throw new BadRequestException(`${role} with this email already exists`);
+    }
+
+    const randomPassword = crypto.randomBytes(6).toString('hex'); 
+     const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+
+
+    const newUser = await Model.create({
+      ...CreateAdminDto,
+      schoolId,      
+      isVerified: true,
+      password: hashedPassword,
+      userType: role,
+ 
+    });
+
+    await this.otpService.sendPassword(email, randomPassword);
+
+
+    const cleanUser = await Model.findById(newUser._id)
+      .select('-__v -createdAt -updatedAt -password');
+
+    return {
+      message: `${role} created successfully`,
+      data: cleanUser,
+    };
+  }
+
+  async editStaff(
+  adminId: string,
+  staffId: string,
+  updateDto: CreateAdminDto,
+) {
+  const { role, email, ...updateData } = updateDto;
+
+  if (!staffId) {
+    throw new BadRequestException('Staff ID is required');
+  }
+
+  const adminObjectId = new Types.ObjectId(adminId);
+
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
+
+
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
+
+  let Model;
+  if (role === 'teacher') {
+    Model = this.databaseService.repositories.teacherModel;
+  } else {
+    Model = this.databaseService.repositories.adminModel;
+  }
+
+  const staffObjectId = new Types.ObjectId(staffId);
+
+  const staff = await Model.findOne({ _id: staffObjectId, schoolId });
+  if (!staff) {
+    throw new NotFoundException('Staff not found');
+  }
+
+  if (email && email !== staff.email) {
+    const existingUser = await Model.findOne({ email, schoolId });
+    if (existingUser) {
+      throw new BadRequestException('Email already exists');
+    }
+    updateDto.email = email;
+  }
+
+  const updatedStaff = await Model.findByIdAndUpdate(
+    staffObjectId,
+    { $set: updateData },
+    { new: true },
+  ).select('-password -__v -createdAt -updatedAt');
+
+  return {
+    message: 'Staff updated successfully',
+    data: updatedStaff,
+  };
+}
+
+async getAllStaffByAdmin(
+  adminId: string,
+  page: number,
+  limit: number,
+  name?: string,
+) {
+  const adminObjectId = new Types.ObjectId(adminId);
+
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
+
+
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
+
+  const skip = (page - 1) * limit;
+
+
+  const filter: any = {
+    schoolId,
+    status: 'active',
+  };
+
+  
+  if (name) {
+    filter.name = { $regex: name, $options: 'i' };
+  }
+
+  const staff = await this.databaseService.repositories.adminModel
+    .find(filter)
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 })
+    .select('-password -__v -createdAt -updatedAt');
+
+  const total =
+    await this.databaseService.repositories.adminModel.countDocuments(filter);
+
+  return {
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+    data: staff,
+  };
+}
+
+async getStaffById(
+  adminId: string,
+  staffId: string,
+) {
+
+  const staffObjectId = new Types.ObjectId(staffId);
+
+const adminObjectId = new Types.ObjectId(adminId);
+
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
+
+
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
+
+
+
+  const staff =
+    await this.databaseService.repositories.adminModel
+      .findOne({
+        _id: staffObjectId,
+        schoolId: school._id.toString(),
+        status: 'active',
+      })
+      .select('-password -__v -createdAt -updatedAt');
+
+  if (!staff) {
+    throw new BadRequestException('Staff not found');
+  }
+
+  return {
+    message: 'Staff fetched successfully',
+    data: staff,
+  };
+}
+
 
 
 }

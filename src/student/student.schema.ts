@@ -14,12 +14,25 @@ export class Student {
   @Prop({ required: true })
   sectionId: string;
 
+   @Prop()
+  isVerified: boolean;
+
   
   @Prop({ type: String, required: true })
   parentId: string;
 
   @Prop({ type: String, required: true })
   schoolId: string;
+
+   @Prop({type: String})
+  userType: string;
+
+  @Prop({type: String})
+  role: string;
+
+   @Prop()
+  image?: string;
+
 
   @Prop()
   admissionNo: string;
@@ -76,6 +89,9 @@ export class Student {
 
   @Prop()
   category: string;
+
+    @Prop()
+  password: string;
 
   @Prop()
   heightIn: number;

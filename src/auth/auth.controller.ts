@@ -6,6 +6,8 @@ import { LoginDto } from './dto/login.dto';
 import { SocialLoginDto } from './dto/social-login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './guard/jwt-auth.guard';
+
 
 
 

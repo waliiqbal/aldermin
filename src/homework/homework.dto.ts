@@ -28,6 +28,10 @@ export class CreateHomeworkDto {
   @IsString()
   description?: string;
 
+    @IsOptional()
+  @IsString()
+  academicYear?: string;
+
   @IsOptional()
   @IsString()
   fileUrl?: string;

@@ -79,106 +79,440 @@ async addAttendance(body: any, adminId: string) {
   };
 }
 
+async addBulkAttendanceByTeacher(
+  teacherId: string,
+  body: {
+    date: string;
+    presentStudentIds: string[];
+  },
+) {
+  const { date, presentStudentIds } = body;
+
+
+  const teacher =
+    await this.databaseService.repositories.teacherModel.findOne({
+      _id: teacherId,
+    });
+
+  if (!teacher) {
+    throw new NotFoundException('Teacher not found');
+  }
+
+  const schoolId = teacher.schoolId;
+  
+  const school =
+    await this.databaseService.repositories.schoolModel.findOne({
+      _id: schoolId,
+    });
+
+  if (!school) {  
+    throw new NotFoundException('School not found for this teacher');
+  } 
+
+
+
+  const section =
+    await this.databaseService.repositories.sectionModel.findOne({
+      teacherId,
+      schoolId,
+      isActive: true,
+    });
+
+  if (!section) {
+    throw new NotFoundException('No active section assigned');
+  }
+
+  const classId = section.classId;
+
+  /* --------------------------------------------------
+     3️⃣ Fetch Section Students
+  -------------------------------------------------- */
+  const students =
+    await this.databaseService.repositories.studentModel.find({
+      sectionId: section._id.toString(),
+      schoolId,
+      classId,
+      status: 'active',
+    });
+
+  if (!students.length) {
+    throw new NotFoundException('No students found');
+  }
+
+  /* --------------------------------------------------
+     4️⃣ Prevent Duplicate Attendance (Same Date)
+  -------------------------------------------------- */
+  const attendanceDate = new Date(date);
+
+  const alreadyMarked =
+    await this.databaseService.repositories.attendanceModel.findOne({
+      sectionId: section._id.toString(),
+      schoolId,
+      date: attendanceDate,
+    });
+
+  if (alreadyMarked) {
+    throw new BadRequestException(
+      'Attendance already marked for this date',
+    );
+  }
+
+  /* --------------------------------------------------
+     5️⃣ Prepare Bulk Attendance
+  -------------------------------------------------- */
+  const attendanceDocs = students.map((student) => ({
+    studentId: student._id.toString(),
+    classId: student.classId,
+    sectionId: section._id.toString(),
+    schoolId,
+    date: attendanceDate,
+    status: presentStudentIds.includes(student._id.toString())
+      ? 'present'
+      : 'absent',
+  }));
+
+  /* --------------------------------------------------
+     6️⃣ Bulk Insert
+  -------------------------------------------------- */
+  await this.databaseService.repositories.attendanceModel.insertMany(
+    attendanceDocs,
+  );
+
+  return {
+    message: 'Attendance marked successfully',
+    date: attendanceDate,
+    totalStudents: students.length,
+    presentCount: attendanceDocs.filter(
+      (a) => a.status === 'present',
+    ).length,
+    absentCount: attendanceDocs.filter(
+      (a) => a.status === 'absent',
+    ).length,
+  };
+}
+
+
 async getAttendance(
   adminId: string,
   page = 1,
   limit = 10,
   classId?: string,
   sectionId?: string,
-  studentId?: string, 
-  date?: string  // Optional filter by date
+  studentId?: string,
+  date?: string
 ) {
-  // Fetch the school based on adminId (token-based)
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: new Types.ObjectId(adminId),
-  });
-  if (!school) throw new NotFoundException('School not found for this admin');
+  const school =
+    await this.databaseService.repositories.schoolModel.findOne({
+      admin: new Types.ObjectId(adminId),
+    });
 
-  // Build the match filter with provided query parameters
+  if (!school)
+    throw new NotFoundException('School not found for this admin');
+
+  
   const matchFilter: any = { schoolId: school._id.toString() };
 
   if (classId) matchFilter.classId = classId;
   if (sectionId) matchFilter.sectionId = sectionId;
   if (studentId) matchFilter.studentId = studentId;
-  if (date) matchFilter.date = new Date(date); // Use date directly from frontend
+  if (date) matchFilter.date = new Date(date);
 
-  // Pagination setup
   const skip = (page - 1) * limit;
 
   const pipeline: any[] = [
     { $match: matchFilter },
 
-    { $addFields: {
-        studentObjectId: { $toObjectId: "$studentId" },
-        classObjectId: { $toObjectId: "$classId" },
-        sectionObjectId: { $toObjectId: "$sectionId" }
-    } },
 
-    // Lookup for student details
+    {
+      $addFields: {
+        studentObjectId: { $toObjectId: '$studentId' },
+        classObjectId: { $toObjectId: '$classId' },
+        sectionObjectId: { $toObjectId: '$sectionId' },
+      },
+    },
+
+   
     {
       $lookup: {
         from: 'students',
         localField: 'studentObjectId',
         foreignField: '_id',
-        as: 'student'
-      }
+        as: 'student',
+      },
     },
     { $unwind: '$student' },
 
-    // Lookup for class details
+
+    {
+      $addFields: {
+        parentObjectId: { $toObjectId: '$student.parentId' },
+      },
+    },
+
+    {
+      $lookup: {
+        from: 'parents',
+        localField: 'parentObjectId',
+        foreignField: '_id',
+        as: 'parent',
+      },
+    },
+    {
+      $unwind: {
+        path: '$parent',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+
+    // 🔹 class lookup
     {
       $lookup: {
         from: 'classes',
         localField: 'classObjectId',
         foreignField: '_id',
-        as: 'class'
-      }
+        as: 'class',
+      },
     },
-    { $unwind: { path: '$class', preserveNullAndEmptyArrays: true } },
+    {
+      $unwind: {
+        path: '$class',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
 
-    // Lookup for section details
+   
     {
       $lookup: {
         from: 'sections',
         localField: 'sectionObjectId',
         foreignField: '_id',
-        as: 'section'
-      }
+        as: 'section',
+      },
     },
-    { $unwind: { path: '$section', preserveNullAndEmptyArrays: true } },
+    {
+      $unwind: {
+        path: '$section',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
 
-    // Group attendance data for final structure
     {
       $group: {
         _id: '$_id',
         studentId: { $first: '$studentId' },
         studentName: { $first: '$student.firstName' },
+        parentName: {$first: '$parent.fatherName'},
         className: { $first: '$class.name' },
         sectionName: { $first: '$section.name' },
         date: { $first: '$date' },
-        status: { $first: '$status' }
-      }
+        status: { $first: '$status' },
+      },
     },
 
-    { $sort: { date: -1 } },  
-
-    { $skip: skip },  
-    { $limit: limit }  
+    { $sort: { date: -1 } },
+    { $skip: skip },
+    { $limit: limit },
   ];
 
-  const data = await this.databaseService.repositories.attendanceModel.aggregate(pipeline);
+  const data =
+    await this.databaseService.repositories.attendanceModel.aggregate(
+      pipeline,
+    );
 
-  // Calculate total records matching the filter criteria
-  const totalCount = await this.databaseService.repositories.attendanceModel.countDocuments(matchFilter);
+  const totalCount =
+    await this.databaseService.repositories.attendanceModel.countDocuments(
+      matchFilter,
+    );
 
   return {
     message: 'Attendance fetched successfully',
     page,
     limit,
     totalCount,
-    data
+    data,
   };
 }
+
+async getAttendanceByTeacher(
+  teacherId: string,
+  page = 1,
+  limit = 10,
+  date?: string,
+) {
+
+  const teacher =
+    await this.databaseService.repositories.teacherModel.findOne({
+      _id: teacherId,
+    });
+
+  if (!teacher) {
+    throw new NotFoundException('Teacher not found');
+  }
+
+  const schoolId = teacher.schoolId;
+
+  
+  const section =
+    await this.databaseService.repositories.sectionModel.findOne({
+      teacherId,
+      schoolId,
+      isActive: true,
+    });
+
+  if (!section) {
+    throw new NotFoundException(
+      'No section assigned to this teacher',
+    );
+  }
+
+
+  const students =
+    await this.databaseService.repositories.studentModel.find(
+      {
+        sectionId: section._id.toString(),
+        schoolId,
+        status: 'active',
+      },
+      { _id: 1 },
+    );
+
+  if (!students.length) {
+    return {
+      message: 'No students found for this section',
+      page,
+      limit,
+      totalCount: 0,
+      data: [],
+    };
+  }
+
+  const studentIds = students.map((s) => s._id.toString());
+
+
+  const matchFilter: any = {
+    studentId: { $in: studentIds },
+    sectionId: section._id.toString(),
+    schoolId,
+  };
+
+  if (date) matchFilter.date = new Date(date);
+
+  const skip = (page - 1) * limit;
+
+  const pipeline: any[] = [
+    { $match: matchFilter },
+
+    {
+      $addFields: {
+        studentObjectId: { $toObjectId: '$studentId' },
+        classObjectId: { $toObjectId: '$classId' },
+        sectionObjectId: { $toObjectId: '$sectionId' },
+      },
+    },
+
+   
+    {
+      $lookup: {
+        from: 'students',
+        localField: 'studentObjectId',
+        foreignField: '_id',
+        as: 'student',
+      },
+    },
+    { $unwind: '$student' },
+
+    // 🔹 parent
+    {
+      $addFields: {
+        parentObjectId: { $toObjectId: '$student.parentId' },
+      },
+    },
+    {
+      $lookup: {
+        from: 'parents',
+        localField: 'parentObjectId',
+        foreignField: '_id',
+        as: 'parent',
+      },
+    },
+    {
+      $unwind: {
+        path: '$parent',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+
+    // 🔹 class
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'classObjectId',
+        foreignField: '_id',
+        as: 'class',
+      },
+    },
+    {
+      $unwind: {
+        path: '$class',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+
+    // 🔹 section
+    {
+      $lookup: {
+        from: 'sections',
+        localField: 'sectionObjectId',
+        foreignField: '_id',
+        as: 'section',
+      },
+    },
+    {
+      $unwind: {
+        path: '$section',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+
+    // 🔹 final response
+    {
+      $group: {
+        _id: '$_id',
+        studentId: { $first: '$studentId' },
+        studentName: { $first: '$student.firstName' },
+        parentName: { $first: '$parent.fatherName' },
+        className: { $first: '$class.name' },
+        sectionName: { $first: '$section.name' },
+        date: { $first: '$date' },
+        status: { $first: '$status' },
+      },
+    },
+
+    { $sort: { date: -1 } },
+    { $skip: skip },
+    { $limit: limit },
+  ];
+
+  const data =
+    await this.databaseService.repositories.attendanceModel.aggregate(
+      pipeline,
+    );
+
+  const totalCount =
+    await this.databaseService.repositories.attendanceModel.countDocuments(
+      matchFilter,
+    );
+
+  return {
+    message: 'Attendance fetched successfully',
+    page,
+    limit,
+    totalCount,
+    data,
+  };
+}
+
+
 
 
 

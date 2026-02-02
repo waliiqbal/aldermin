@@ -9,21 +9,30 @@ export class SectionService {
   async addSection(body: any, adminId: string) {
   const { name, description, classId } = body;
 
-  const adminObjectId = new Types.ObjectId(adminId);
+const adminObjectId = new Types.ObjectId(adminId);
+
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
 
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
 
-  if (!school) {
-    throw new NotFoundException('School not found for this admin');
-  }
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
 
 
   const classData = await this.databaseService.repositories.classModel.findOne({
     _id: classId,
-    schoolId: school._id,
+    schoolId: schoolId,
     isActive: true,
   });
 
@@ -35,8 +44,9 @@ export class SectionService {
 
   const existingSection = await this.databaseService.repositories.sectionModel.findOne({
     name: { $regex: new RegExp(`^${name}$`, 'i') },
-    schoolId: school._id,
+    schoolId: schoolId,
     classId: classId,
+    isActive: true
   });
 
   if (existingSection) {
@@ -47,7 +57,7 @@ export class SectionService {
   const newSection = await this.databaseService.repositories.sectionModel.create({
     name,
     description,
-    schoolId: school._id,
+    schoolId: schoolId,
     classId: classId,
   });
 
@@ -65,17 +75,26 @@ export class SectionService {
 async getAllSectionsByAdmin(adminId: string, classId?: string) {
   const adminObjectId = new Types.ObjectId(adminId);
 
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
 
-  if (!school) {
-    throw new NotFoundException('School not found for this admin');
-  }
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
 
   const query: any = {
-    schoolId: school._id,
+    schoolId: schoolId,
     isActive: true,
   };
 
@@ -101,20 +120,29 @@ async assignClassTeacher(body: any, adminId: string) {
 
   const adminObjectId = new Types.ObjectId(adminId);
 
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
 
-  if (!school) {
-    throw new NotFoundException('School not found for this admin');
-  }
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
 
 
   const section = await this.databaseService.repositories.sectionModel.findOne({
     _id: sectionId,
     classId: classId,
-    schoolId: school._id,
+    schoolId: schoolId,
     isActive: true,
   });
 
@@ -141,19 +169,27 @@ async editSection(body: any, adminId: string) {
 
   const adminObjectId = new Types.ObjectId(adminId);
 
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
 
-  if (!school) {
-    throw new NotFoundException('School not found for this admin');
-  }
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
 
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
  
   const classData = await this.databaseService.repositories.classModel.findOne({
     _id: classId,
-    schoolId: school._id,
+    schoolId: schoolId,
     isActive: true,
   });
 
@@ -164,7 +200,7 @@ async editSection(body: any, adminId: string) {
 
   const section = await this.databaseService.repositories.sectionModel.findOne({
     _id: id,
-    schoolId: school._id,
+    schoolId: schoolId,
   });
 
   if (!section) {
@@ -175,7 +211,7 @@ async editSection(body: any, adminId: string) {
   if (name) {
     const existingSection = await this.databaseService.repositories.sectionModel.findOne({
       name: { $regex: new RegExp(`^${name}$`, 'i') },
-      schoolId: school._id,
+      schoolId: schoolId,
       classId: classId,
     });
 
@@ -185,7 +221,7 @@ async editSection(body: any, adminId: string) {
   }
 
   const updatedSection = await this.databaseService.repositories.sectionModel.findOneAndUpdate(
-    { _id: id, schoolId: school._id },
+    { _id: id, schoolId: schoolId },
     { $set: { name, description, classId, isActive } },
     { new: true }
   );

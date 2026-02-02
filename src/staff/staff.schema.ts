@@ -2,10 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 
-export type TeacherDocument = Teacher & Document;
+export type StaffDocument = Staff & Document;
 
 @Schema({ timestamps: true })
-export class Teacher {
+export class Staff {
 
 
   @Prop({ required: true })
@@ -28,9 +28,6 @@ export class Teacher {
 
   @Prop()
   otpExpiresAt: Date;
-
-    @Prop()
-  image?: string;
 
   @Prop({ default: false })
   isVerified: boolean;
@@ -92,4 +89,4 @@ export class Teacher {
 
 }
 
-export const TeacherSchema = SchemaFactory.createForClass(Teacher);
+export const StaffSchema = SchemaFactory.createForClass(Staff);

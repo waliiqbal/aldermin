@@ -2,26 +2,34 @@ import { Body, Controller, Query, Post, Get, Req, UseGuards, BadRequestException
 import { AuthGuard } from '@nestjs/passport';
 import { AddBookDto } from '../library/dto/addBook.dto'
 import { LibraryService } from './library.service';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { Roles } from 'src/auth/decorator/roles.decorator';
+import { RolesGuard } from 'src/auth/guard/roles.guard';  
+
+
+
 
 @Controller('library')
 export class LibraryController {
   constructor(private readonly libraryService: LibraryService) {}
 
-  @UseGuards(AuthGuard('jwt'))
+ @UseGuards(JwtAuthGuard, RolesGuard)
+ @Roles('admin', 'adminStaff')
   @Post('addBook')
   async addBookByAdmin(@Req() req: any, @Body() body: AddBookDto) {
     const adminId = req.user.userId;
     return this.libraryService.addBook(body, adminId);
   }
 
-@UseGuards(AuthGuard('jwt'))
-@Post('addMember')
+ @UseGuards(JwtAuthGuard, RolesGuard)
+ @Roles('admin', 'adminStaff')
 async addMemberByAdmin(@Req() req: any, @Body() body: any) {
   const adminId = req.user.userId;
   return this.libraryService.addMember(body, adminId);
 }
 
-@UseGuards(AuthGuard('jwt'))
+ @UseGuards(JwtAuthGuard, RolesGuard)
+ @Roles('admin', 'adminStaff')
 @Get('getBookCategories')
 async getBookCategories(@Req() req: any) {
   const adminId = req.user.userId;
@@ -52,7 +60,8 @@ async getBookCategories(@Req() req: any) {
   };
 }
 
-@UseGuards(AuthGuard('jwt'))
+ @UseGuards(JwtAuthGuard, RolesGuard)
+ @Roles('admin', 'adminStaff')
 @Get('getBooksByAdmin')
 async getBooks(
   @Req() req: any,
@@ -78,7 +87,8 @@ async getBooks(
     search,
   );
 }
-@UseGuards(AuthGuard('jwt'))
+ @UseGuards(JwtAuthGuard, RolesGuard)
+ @Roles('admin', 'adminStaff')
 @Get('getLibraryMembers')
 async getLibraryMembers(
   @Req() req: any,
@@ -98,7 +108,8 @@ async getLibraryMembers(
   );
 }
 
-@UseGuards(AuthGuard('jwt'))
+ @UseGuards(JwtAuthGuard, RolesGuard)
+ @Roles('admin', 'adminStaff')
 @Post('issueBook')
 async issueBook(
   @Req() req: any,
@@ -113,7 +124,8 @@ async issueBook(
   return this.libraryService.issueBookByAdmin(adminId, body);
 }
 
-@UseGuards(AuthGuard('jwt'))
+ @UseGuards(JwtAuthGuard, RolesGuard)
+ @Roles('admin', 'adminStaff')
 @Get('getIssuedBooks')
 async getIssuedBooks(
   @Req() req: any,

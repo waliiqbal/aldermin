@@ -17,6 +17,15 @@ export class Parent {
     @Prop()
   fatherEmail: string;
 
+  @Prop({ required: String })
+  userType: string;
+
+   @Prop()
+  image?: string;
+
+  @Prop({type: String})
+  role: string;
+
   @Prop()
   fatherOccupation: string;
 
@@ -107,9 +116,13 @@ export class Parent {
     @Prop({ default: "active" })
   status: string;
 
-   @Prop({ required: true })
-  userType: string;
- 
+   @Prop()
+  isVerified: boolean
+
+    @Prop()
+  password: string;
+
+
 }
 
 

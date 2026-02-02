@@ -1,10 +1,14 @@
 /* eslint-disable prettier/prettier */
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class SignupDto {
   @IsNotEmpty()
   @IsString()
   name: string;
+
+  @IsNotEmpty()
+  @IsString()
+  schoolId: string;
 
   @IsEmail()
   email: string;
@@ -16,6 +20,10 @@ export class SignupDto {
    @IsNotEmpty()
   @IsString()
   userType: string;
+
+   @IsOptional()
+  @IsString()
+  image: string;
 }
 
 

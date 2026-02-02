@@ -32,7 +32,7 @@ import { JwtAuthGuard } from './guard/jwt-auth.guard';
       }),
     }),
 
-    // ✅ User schema inject for MongoDB
+
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [AuthController],

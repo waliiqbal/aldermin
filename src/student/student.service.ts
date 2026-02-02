@@ -1,23 +1,40 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/databaseservice';
 import { Types } from 'mongoose';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import { OtpService } from 'src/otp/otp.service';
+
 
 @Injectable()
 export class StudentService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService
+    , private readonly otpService: OtpService
+  )
+  
+   {}
 
 
 async addStudentWithParent(body: any, adminId: string) {
   const { studentInfo, parentInfo } = body;
   const adminObjectId = new Types.ObjectId(adminId);
 
+  const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
+  if (!adminData) {
+    throw new NotFoundException('Admin/Admin Staff not found');
+  }
 
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
-  if (!school) throw new NotFoundException('School not found for this admin');
+  const schoolId = adminData.schoolId;
+  if (!schoolId) {
+    throw new BadRequestException('School ID not found for this admin/admin_staff');
+  }
 
- 
+  const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+  if (!school) {
+    throw new NotFoundException('School not found for this admin');
+  }
+
+
   let parent = await this.databaseService.repositories.parentModel.findOne({
     $or: [
       { fatherEmail: parentInfo.fatherEmail },
@@ -27,31 +44,47 @@ async addStudentWithParent(body: any, adminId: string) {
   });
 
   if (!parent) {
- 
+
+    const parentRandomPassword = crypto.randomBytes(6).toString('hex');
+    const parentHashedPassword = await bcrypt.hash(parentRandomPassword, 10);
+
     parent = await this.databaseService.repositories.parentModel.create({
       ...parentInfo,
-      schoolId: school._id,
+      schoolId: schoolId,
+      password: parentHashedPassword,
+      isVerified: true,
     });
+
+
+    await this.otpService.sendPassword(parentInfo.fatherEmail, parentRandomPassword);
   }
 
+ 
+  const studentRandomPassword = crypto.randomBytes(6).toString('hex');
+  const studentHashedPassword = await bcrypt.hash(studentRandomPassword, 10);
 
   const newStudent = await this.databaseService.repositories.studentModel.create({
     ...studentInfo,
-    schoolId: school._id,
+    schoolId: schoolId,
     parentId: parent._id,
+    password: studentHashedPassword,
+    isVerified: true,
   });
 
+  // Send password to student's email
+  await this.otpService.sendPassword(studentInfo.email, studentRandomPassword);
 
+  // ---------------- Clean response ----------------
   const cleanStudent = await this.databaseService.repositories.studentModel
     .findById(newStudent._id)
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v -createdAt -updatedAt -password');
 
   const cleanParent = await this.databaseService.repositories.parentModel
     .findById(parent._id)
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v -createdAt -updatedAt -password');
 
   return {
-    message: 'Student added successfully',
+    message: 'Student and parent added successfully',
     data: {
       student: cleanStudent,
       parent: cleanParent
@@ -62,14 +95,27 @@ async addStudentWithParent(body: any, adminId: string) {
 
 
 
+
   async getStudentsByAdmin(adminId: string, query: any) {
-    const adminObjectId = new Types.ObjectId(adminId);
+   const adminObjectId = new Types.ObjectId(adminId);
+
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
 
-    const school = await this.databaseService.repositories.schoolModel.findOne({
-      admin: adminObjectId,
-    });
-    if (!school) throw new UnauthorizedException('School not found');
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
 
 
     const page = Math.max(1, parseInt(query.page, 10) || 1);
@@ -77,9 +123,14 @@ async addStudentWithParent(body: any, adminId: string) {
     const skip = (page - 1) * limit;
 
    
-    const match: any = { schoolId: school._id.toString() };
+    const match: any = {
+    schoolId: school._id.toString(),
+    status: 'active',
+  };
+
     if (query.classId) match.classId = query.classId;
     if (query.sectionId) match.sectionId = query.sectionId;
+    if (query.academicYear) match.academicYear = query.academicYear;
 
 
     const students = await this.databaseService.repositories.studentModel.aggregate([
@@ -159,15 +210,30 @@ async addStudentWithParent(body: any, adminId: string) {
   ) {
     const adminObjectId = new Types.ObjectId(adminId);
 
-   
-    const school = await this.databaseService.repositories.schoolModel.findOne({
-      admin: adminObjectId,
-    });
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-    if (!school) throw new UnauthorizedException('School not found');
 
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
    
-    const student = await this.databaseService.repositories.studentModel.findById(studentId);
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
+
+
+    const student = await this.databaseService.repositories.studentModel.findOne({
+  _id: studentId,
+  status: 'active',
+});
+
     if (!student) throw new UnauthorizedException('Student not found');
 
   

@@ -16,6 +16,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { RedisService } from 'src/redis/redis.service';
+import { Roles } from 'src/auth/decorator/roles.decorator';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { CreateAdminDto } from './dto/addStaff.dto';
 
 
 @Controller('Admin')
@@ -105,5 +108,64 @@ async logout(@Req() req) {
 
   return this.adminService.logoutAdmin(req.user.userId);
 }
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'adminStaff')
+  @Post('addStaff')
+  async addStaff(@Req() req: any, @Body() CreateAdminDto: CreateAdminDto) {
+    const userId = req.user.userId; 
+    return this.adminService.addStaff(CreateAdminDto, userId);
+  }
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'adminStaff')
+@Post('editStaff')
+async editStaff(
+  @Req() req: any,
+  @Body() body: CreateAdminDto & { staffId: string },
+) {
+  const adminId = req.user.userId;
+
+  const { staffId, ...createAdminDto } = body;
+
+  return this.adminService.editStaff(
+    adminId,
+    staffId,
+    createAdminDto,
+  );
+}
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
+@Get('getAllStaffByAdmin')
+async getAllStaffByAdmin(
+  @Req() req: any,
+  @Query('page') page?: number,
+  @Query('limit') limit?: number,
+  @Query('name') name?: string,
+) {
+  const adminId = req.user.userId;
+
+  return this.adminService.getAllStaffByAdmin(
+    adminId,
+    Number(page) || 1,
+    Number(limit) || 10,
+    name,
+  );
+}
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'adminStaff')
+@Get('getStaffById/:id')
+async getStaffById(
+  @Req() req: any,
+  @Param('id') id: string,
+) {
+  const adminId = req.user.userId;
+
+  return this.adminService.getStaffById(adminId, id);
+}
+
+
 
 }

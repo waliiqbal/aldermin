@@ -14,6 +14,10 @@ import {
 import { StudentService } from './student.service';
 import { AuthGuard } from '@nestjs/passport';
 import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { Roles } from 'src/auth/decorator/roles.decorator';
+import { RolesGuard } from 'src/auth/guard/roles.guard';  
+
 
 
 @Controller('student')
@@ -24,7 +28,8 @@ export class StudentController {
 
   ) {}
 
-    @UseGuards(AuthGuard('jwt'))
+   @UseGuards(JwtAuthGuard, RolesGuard)
+   @Roles('admin', 'adminStaff')
  @Post('addStudentWithParent')
  async addSection(@Req() req: any, @Body() body: any) {
    const adminId = req.user.userId;
@@ -33,7 +38,8 @@ export class StudentController {
 
 }
 
-@UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @Get('getStudentsByAdmin')
   async getStudents(
     @Req() req: any,
@@ -49,7 +55,8 @@ export class StudentController {
   }
 
 
-@UseGuards(AuthGuard('jwt')) 
+    @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'adminStaff')
 @Post('promoteStudent')
 async promoteStudent(
   @Req() req: any,

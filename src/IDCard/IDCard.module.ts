@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
-import { ReportController } from './report.controller';
-import { ReportService } from './report.service';
+import { IdCardController } from './IDCard.controller';
+import { IDCardService } from './IDCard.service';
 import { AuthModule } from 'src/auth/auth.module';  
 import { RedisModule } from 'src/redis/redis.module';  
 
@@ -11,10 +11,10 @@ import { RedisModule } from 'src/redis/redis.module';
 @Module({
  
    imports: [AuthModule, RedisModule], 
-  controllers: [ReportController],
-  providers: [ReportService], 
-  exports: [ReportService], 
+  controllers: [IdCardController ],
+  providers: [IDCardService], 
+  exports: [IDCardService], 
 
 })
 
-export class ReportModule {}
+export class IdCardModule {}

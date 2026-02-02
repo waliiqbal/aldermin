@@ -73,7 +73,7 @@ const getPreviousMonth = (currentMonth: string): string | null => {
   const index = months.indexOf(monthName);
   if (index === -1) return null;
 
-  // January ka previous → December last year
+
   if (index === 0) {
     return `December-${year - 1}`;
   }

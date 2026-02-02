@@ -84,6 +84,12 @@ export class DatabaseService {
         @InjectModel(schema.PhoneCall.name)     
     private phoneCallModel: Model<schema.PhoneCallDocument>,
 
+        @InjectModel(schema.IdCardTemplate.name)     
+    private idCardTemplateModel: Model<schema.IdCardTemplateDocument>,
+
+      @InjectModel(schema.CertificateTemplate.name)     
+    private certificateTemplateModel: Model<schema.CertificateTemplateDocument>,
+
      ) {}
      get repositories() {
     return {
@@ -112,7 +118,8 @@ export class DatabaseService {
       visitorModel: this.visitorModel,
       postalModel: this.postalModel,
       phoneCallModel: this.phoneCallModel,
-  
+      idCardTemplateModel: this.idCardTemplateModel,
+      certificateTemplateModel: this.certificateTemplateModel,
 
         };
   }

@@ -28,6 +28,13 @@ export {Complaint, ComplaintDocument, ComplaintSchema} from '../complaint/compla
 export {Visitor, VisitorDocument, VisitorSchema} from '../visitor/visitor.schema'
 export {Postal, PostalDocument, PostalSchema} from '../postal/postal.schema'
 export {PhoneCall, PhoneCallDocument, PhoneCallSchema} from '../phoneCall/phoneCall.schema'
+export {IdCardTemplate, IdCardTemplateDocument, IdCardTemplateSchema} from '../IDCard/IDCard.schema'
+export {CertificateTemplate, CertificateTemplateDocument, CertificateTemplateSchema} from '../certificate/certificate.schema'
+
+
+
+
+
 
 
 

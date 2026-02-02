@@ -37,6 +37,8 @@ import { DatabaseService } from './databaseservice'
        { name: schema.Visitor.name, schema: schema.VisitorSchema},
         { name: schema.Postal.name, schema: schema.PostalSchema},
         { name: schema.PhoneCall.name, schema: schema.PhoneCallSchema},
+        { name: schema.IdCardTemplate.name, schema: schema.IdCardTemplateSchema},
+        { name: schema.CertificateTemplate.name, schema: schema.CertificateTemplateSchema},
 
     
        

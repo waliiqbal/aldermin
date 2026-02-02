@@ -10,12 +10,19 @@ export class ClassService {
     const { name, description} = body;
     const adminObjectId = new Types.ObjectId(adminId);
 
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
 
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
    
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
     
     if (!school) {
       throw new NotFoundException('School not found for this admin');
@@ -24,7 +31,8 @@ export class ClassService {
    
     const existingClass = await this.databaseService.repositories.classModel.findOne({
       name: { $regex: new RegExp(`^${name}$`, 'i') },
-      schoolId: school._id
+      schoolId: schoolId,
+      isActive: true
     });
 
     if (existingClass) {
@@ -35,7 +43,7 @@ export class ClassService {
     const newClass = await this.databaseService.repositories.classModel.create({
       name,
       description,
-      schoolId: school._id,   
+      schoolId: schoolId,   
  
     });
 
@@ -53,18 +61,27 @@ export class ClassService {
   async getClassesByAdmin(adminId: string) {
   const adminObjectId = new Types.ObjectId(adminId);
 
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
 
-  if (!school) {
-    throw new NotFoundException('School not found for this admin');
-  }
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
 
 
   const classes = await this.databaseService.repositories.classModel
-    .find({ schoolId: school._id, isActive: true })
+    .find({ schoolId: schoolId, isActive: true })
     
     .select('-__v -createdAt -updatedAt');
 

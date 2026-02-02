@@ -12,14 +12,23 @@ export class LibraryService {
 
   const adminObjectId = new Types.ObjectId(adminId);
 
- 
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-  if (!school) {
-    throw new NotFoundException('School not found for this admin');
-  }
+
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
 
 
   const newBook = await this.databaseService.repositories.bookModel.create(body);
@@ -61,16 +70,25 @@ async addMember(body: any, adminId: string) {
     throw new BadRequestException('memberId and memberType are required');
   }
 
-  const adminObjectId = new Types.ObjectId(adminId);
+ const adminObjectId = new Types.ObjectId(adminId);
 
-  // 1️⃣ Find school by admin
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-  if (!school) {
-    throw new NotFoundException('School not found for this admin');
-  }
+
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
 
 
   let library = await this.databaseService.repositories.libraryModel.findOne({
@@ -123,13 +141,24 @@ async getBooks(
 
   const adminObjectId = new Types.ObjectId(adminId);
 
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-  if (!school) {
-    throw new UnauthorizedException('Invalid admin or school not found');
-  }
+
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
+
 
 
   const filter: any = {};
@@ -183,19 +212,26 @@ async getLibraryMembersByAdmin(
   const skip = (page - 1) * limit;
   const adminObjectId = new Types.ObjectId(adminId);
 
-  // 1️⃣ Find school
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
-
-  if (!school) {
-    throw new UnauthorizedException('Invalid admin or school not found');
-  }
-
-  const schoolId = school._id;
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
 
-  const matchStage: any = { schoolId: schoolId.toString() };
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
+
+
+  const matchStage: any = { schoolId: schoolId };
   if (memberType) {
     matchStage['members.memberType'] = memberType; 
   }
@@ -306,12 +342,25 @@ async issueBookByAdmin(
 
 
   const adminObjectId = new Types.ObjectId(adminId);
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
-  if (!school) {
-    throw new UnauthorizedException('Invalid admin or school not found');
-  }
+
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
+
+
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
+
 
  
   const newIssuance = await this.databaseService.repositories.issuanceModel.create({
@@ -340,21 +389,31 @@ await this.databaseService.repositories.bookModel.findByIdAndUpdate(bookId, {
 
 async getAllIssuedBooks(adminId: string, page = 1, limit = 10) {
   const skip = (page - 1) * limit;
-  const adminObjectId = new Types.ObjectId(adminId);
+ const adminObjectId = new Types.ObjectId(adminId);
 
-  // 1️⃣ Find school by admin
-  const school = await this.databaseService.repositories.schoolModel.findOne({
-    admin: adminObjectId,
-  });
-  if (!school) {
-    throw new UnauthorizedException('School not found');
-  }
+    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
 
-  // 2️⃣ Aggregate issued books with member and book info
+
+    if (!adminData) {
+      throw new NotFoundException('Admin/Admin Staff not found');
+    }
+
+    const schoolId = adminData.schoolId;
+    if (!schoolId) {
+      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    }
+   
+    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+    
+    if (!school) {
+      throw new NotFoundException('School not found for this admin');
+    }
+
+
+
   const issuedBooks = await this.databaseService.repositories.issuanceModel.aggregate([
     { $match: { isReturned: false } },
 
-    // Book lookup
     {
       $lookup: {
         from: 'books',
@@ -367,7 +426,7 @@ async getAllIssuedBooks(adminId: string, page = 1, limit = 10) {
     },
     { $unwind: '$bookInfo' },
 
-    // Student lookup
+
     {
       $lookup: {
         from: 'students',
@@ -387,7 +446,7 @@ async getAllIssuedBooks(adminId: string, page = 1, limit = 10) {
       }
     },
 
-    // Teacher lookup
+
     {
       $lookup: {
         from: 'teachers',
@@ -407,7 +466,7 @@ async getAllIssuedBooks(adminId: string, page = 1, limit = 10) {
       }
     },
 
-    // Merge student/teacher info
+
     {
       $addFields: {
         memberData: {
@@ -419,7 +478,6 @@ async getAllIssuedBooks(adminId: string, page = 1, limit = 10) {
       }
     },
 
-    // Final projection
     {
       $project: {
         memberType: 1,

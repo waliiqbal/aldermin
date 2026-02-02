@@ -39,7 +39,7 @@ export class Homework {
 
   @Prop({
     required: true,
-    enum: ['ADMIN', 'TEACHER']
+    enum: ['admin', 'teacher', 'adminStaff'],
   })
   type: string;
 

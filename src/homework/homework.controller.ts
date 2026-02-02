@@ -13,8 +13,8 @@ export class HomeworkController {
     @Req() req: any,
     @Body() createHomeworkDto: CreateHomeworkDto, 
   ) {
-    const adminId = req.user.userId;
-    return this.homeworkService.addHomework(createHomeworkDto, adminId);
+     const { userId, userType } = req.user;
+    return this.homeworkService.addHomework(createHomeworkDto, userId, userType);
   }
 
  @UseGuards(AuthGuard('jwt'))
@@ -42,5 +42,35 @@ export class HomeworkController {
       subjectId
     );
   }
+
+   @UseGuards(AuthGuard('jwt'))
+  @Get('getHomeworksByTeacher')
+async getHomeworksByTeacher(
+  @Req() req: any,
+  @Query('page') page?: number,
+  @Query('limit') limit?: number,
+  @Query('classId') classId?: string,
+  @Query('sectionId') sectionId?: string,
+  @Query('subjectId') subjectId?: string,
+  @Query('homeworkDate') homeworkDate?: Date,
+) {
+  const teacherId = req.user.userId;
+
+  if (!teacherId) {
+    throw new BadRequestException('Invalid teacher token');
+  }
+
+  return this.homeworkService.getHomeworksByTeacher(
+    teacherId,
+    Number(page) || 1,
+    Number(limit) || 10,
+    classId,
+    sectionId,
+    subjectId,
+    homeworkDate,
+  );
+}
+
+
 
 }

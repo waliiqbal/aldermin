@@ -38,6 +38,18 @@ export class AttendanceController {
 }
 
 @UseGuards(AuthGuard('jwt'))
+@Post('addBulkAttendance')
+async addAttendance(@Req() req: any, @Body() body: any) {
+  const teacherId = req.user.userId; // JWT se teacherId
+
+  return this.AttendanceService.addBulkAttendanceByTeacher(
+    teacherId,
+    body,
+  );
+}
+
+
+@UseGuards(AuthGuard('jwt'))
 @Get('getAttendance')
 async getAttendance(
   @Req() req: any,
@@ -64,6 +76,30 @@ async getAttendance(
     date
   );
 }
+
+@UseGuards(AuthGuard('jwt'))
+@Get('getAttendanceByTeacher')
+async getAttendanceByTeacher(
+  @Req() req: any,
+  @Query('page') page?: number,
+  @Query('limit') limit?: number,
+  @Query('date') date?: string,
+) {
+  const teacherId = req.user.userId;
+
+  if (!teacherId) {
+    throw new BadRequestException('Invalid teacher token');
+  }
+
+  return this.AttendanceService.getAttendanceByTeacher(
+    teacherId,
+    Number(page) || 1,
+    Number(limit) || 10,
+    date,
+  );
+}
+
+
 
 }
 
