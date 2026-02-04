@@ -30,7 +30,7 @@ export class AuthService {
 
 async signup(signupDto: SignupDto) {
   try {
-    const { name, email, password, userType, image } = signupDto;
+    const { name, email, password, userType, image, schoolId, campusId } = signupDto;
 
     let userModel;
 

@@ -114,7 +114,7 @@ async getAllSubjectByAdmin(adminId: string, classId?: string) {
   };
 }
 
- async assignSubjectToTeacher(adminId: string, teacherId: string, subjectId: string, classId: string, sectionId: string) {
+ async assignSubjectToTeacher(adminId: string, teacherId: string, subjectId: string, classId: string, sectionId: string, academicYear: string) {
   
   const adminObjectId = new Types.ObjectId(adminId);
 
@@ -166,6 +166,7 @@ async getAllSubjectByAdmin(adminId: string, classId?: string) {
     }
 
     assignment.teacherId = teacherId;
+    assignment.academicYear = academicYear;
 
 
     await subject.save();

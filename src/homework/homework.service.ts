@@ -131,6 +131,7 @@ async getHomeworksByAdmin(
   classId?: string,
   sectionId?: string,
   subjectId?: string,
+  academicYear?: string,
 ) {
   const adminObjectId = new Types.ObjectId(adminId);
 
@@ -157,10 +158,11 @@ async getHomeworksByAdmin(
   }
 
   // 🔹 MATCH FILTER
-  const match: any = { schoolId };
+  const match: any = { schoolId};
   if (classId) match.classId = classId;
   if (sectionId) match.sectionId = sectionId;
   if (subjectId) match.subjectId = subjectId;
+  if (academicYear) match.academicYear = academicYear;
 
   const skip = (page - 1) * limit;
 
@@ -287,6 +289,7 @@ async getHomeworksByTeacher(
   sectionId?: string,
   subjectId?: string,
   homeworkDate?: Date,
+  academicYear?: string,
 ) {
   const teacherObjectId = new Types.ObjectId(teacherId);
 
@@ -321,6 +324,7 @@ async getHomeworksByTeacher(
   if (sectionId) match.sectionId = sectionId;
   if (subjectId) match.subjectId = subjectId;
   if (homeworkDate) match.homeworkDate = homeworkDate;
+  if (academicYear) match.academicYear = academicYear;
 
 
   const skip = (page - 1) * limit;

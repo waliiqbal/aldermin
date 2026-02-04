@@ -21,11 +21,12 @@ export class Subject {
   @Prop({
     type: [{
       teacherId: { type: String },  
-      sectionId: { type: String }  
+      sectionId: { type: String },
+      academicYear: {type: String},
     }],
     default: []
   })
-  subjectAssignments: { teacherId: string, sectionId: string }[];  
+  subjectAssignments: { teacherId: string, sectionId: string, academicYear: string }[];  
 
   @Prop({ default: true })
   isActive: boolean;  

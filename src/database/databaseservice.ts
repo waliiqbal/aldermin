@@ -90,12 +90,17 @@ export class DatabaseService {
       @InjectModel(schema.CertificateTemplate.name)     
     private certificateTemplateModel: Model<schema.CertificateTemplateDocument>,
 
+    @InjectModel(schema.Campus.name)     
+    private campusModel: Model<schema.CampusDocument>,
+
+
      ) {}
      get repositories() {
     return {
       userModel: this.userModel,
       schoolModel: this.schoolModel,
       adminModel: this.adminModel,
+      campusModel: this.campusModel,
       classModel: this.classModel,
       studentModel: this.studentModel,
       sectionModel: this.sectionModel,

@@ -46,9 +46,9 @@ async getAllSections(@Req() req: any, @Query('classId') classId?: string) {
 @UseGuards(AuthGuard('jwt'))
   @Post('assignSubjectToTeacher')
   async assignSubjectToTeacher(@Body() body: any, @Req() req: any) {
-    const { teacherId, subjectId, classId, sectionId } = body;
+    const { teacherId, subjectId, classId, sectionId, academicYear } = body;
      const adminId = req.user.userId;
-    return this.SubjectService.assignSubjectToTeacher(adminId, teacherId, subjectId, classId, sectionId);
+    return this.SubjectService.assignSubjectToTeacher(adminId, teacherId, subjectId, classId, sectionId, academicYear);
   }
 
 

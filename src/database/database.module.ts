@@ -39,6 +39,7 @@ import { DatabaseService } from './databaseservice'
         { name: schema.PhoneCall.name, schema: schema.PhoneCallSchema},
         { name: schema.IdCardTemplate.name, schema: schema.IdCardTemplateSchema},
         { name: schema.CertificateTemplate.name, schema: schema.CertificateTemplateSchema},
+        { name: schema.Campus.name, schema: schema.CampusSchema},
 
     
        

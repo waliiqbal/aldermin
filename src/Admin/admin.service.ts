@@ -11,6 +11,7 @@ import { Types } from 'mongoose';
 
 
 import mongoose from 'mongoose';
+import { School } from 'src/school/school.schema';
 
 
 
@@ -112,7 +113,121 @@ async createAdminAndSchool(body: any) {
   };
 
   
+
+  
 }
+
+
+async createCampusAndCampusAdmin(body: any) {
+  const { campusAdminInfo, campusInfo, adminId } = body;
+
+  const admin = await this.databaseService.repositories.adminModel.findById(adminId);
+  if (!admin) {
+    throw new NotFoundException('Admin not found');
+  }
+
+  const schoolId = admin.schoolId;
+
+
+  const school = await this.databaseService.repositories.schoolModel.findById( schoolId);
+  if (!school) {
+    throw new NotFoundException('School not found');
+  }
+
+
+  const existingCampusAdmin =
+    await this.databaseService.repositories.adminModel.findOne({
+      email: campusAdminInfo.email,
+    });
+
+  if (existingCampusAdmin) {
+    throw new BadRequestException('Campus admin with this email already exists');
+  }
+
+  
+  const randomPassword = crypto.randomBytes(6).toString('hex');
+  const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+
+  const campusAdmin =
+    await this.databaseService.repositories.adminModel.create({
+      ...campusAdminInfo,
+      password: hashedPassword,
+      role: 'CampusAdmin',
+      schoolId: schoolId,
+    });
+
+const campus =
+    await this.databaseService.repositories.campusModel.create({
+      ...campusInfo,
+      schoolId: schoolId,
+      campusAdminId: campusAdmin._id.toString(),
+    });
+
+
+
+  const token = this.jwtService.sign(
+    {
+      sub: campusAdmin._id,
+      email: campusAdmin.email,
+      role: campusAdmin.role,
+    },
+    { expiresIn: '30d' },
+  );
+
+
+  const cleanCampusAdmin =
+    await this.databaseService.repositories.adminModel
+      .findById(campusAdmin._id)
+      .select('-password -createdAt -updatedAt -__v');
+
+  const cleanCampus =
+    await this.databaseService.repositories.campusModel
+      .findById(campus._id)
+      .select('-createdAt -updatedAt -__v');
+
+
+  await this.otpService.sendPassword(campusAdmin.email, randomPassword);
+
+  return {
+    message: 'Campus and campus admin created successfully',
+    data: {
+      token,
+      campusAdmin: cleanCampusAdmin,
+      campus: cleanCampus,
+    },
+  }
+
+}
+
+async getallschool() {
+
+  const schools = await this.databaseService.repositories.schoolModel
+      .find()
+      .sort({ _id: -1 }) 
+      .lean();
+
+      
+    return {
+      message: 'All school fetched successfully',
+      data: schools,
+    }; 
+  }
+
+  async getAllCampusesBySchool(schoolId: string) {
+
+  const campuses =
+    await this.databaseService.repositories.campusModel
+      .find({ schoolId: schoolId })
+      .sort({ _id: -1 })
+      .lean();
+
+  return {
+    message: 'All campuses fetched successfully',
+    data: campuses,
+  };
+}
+
 
 async loginAdmin(loginData: any) {
   try {

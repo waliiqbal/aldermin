@@ -6,6 +6,10 @@ export class SignupDto {
   @IsString()
   name: string;
 
+   @IsNotEmpty()
+  @IsString()
+  campusId: string;
+
   @IsNotEmpty()
   @IsString()
   schoolId: string;

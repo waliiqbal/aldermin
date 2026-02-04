@@ -50,6 +50,32 @@ async createAdminAndSchool(@Req() req, @Body() body: any) {
   return this.adminService.createAdminAndSchool(body);
 }
 
+@UseGuards(AuthGuard('jwt'))
+@Post('createCampusAndCampusAdmin')
+async createCampusAndCampusAdmin(@Req() req, @Body() body: any) {
+
+  const role = req.user.role; 
+  console.log(role)
+   if (req.user.role !== 'admin') {
+    throw new UnauthorizedException('Only superadmins can access this API');
+  }
+
+  return this.adminService.createCampusAndCampusAdmin(body);
+}
+
+@Get('getAllSchools')
+async getAllSchools() {
+  return this.adminService.getallschool(); 
+}
+
+@Get('getAllCampusesBySchool/:schoolId')
+async getAllCampusesBySchool(
+  @Param('schoolId') schoolId: string,
+) {
+  return this.adminService.getAllCampusesBySchool(schoolId);
+}
+
+
 
     @Post('login')
   async login(@Body() loginData: any) {
