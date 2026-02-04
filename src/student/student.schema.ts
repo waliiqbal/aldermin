@@ -24,6 +24,9 @@ export class Student {
   @Prop({ type: String, required: true })
   schoolId: string;
 
+  @Prop({ type: String})
+  campusId: string; 
+
    @Prop({type: String})
   userType: string;
 

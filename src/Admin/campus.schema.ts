@@ -18,7 +18,7 @@ export class Campus {
 
 
   @Prop({ required: true })
-  AdminId: string;
+  campusAdminId: string;
 }
 
 export const CampusSchema = SchemaFactory.createForClass(Campus);

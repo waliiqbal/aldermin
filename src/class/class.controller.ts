@@ -29,7 +29,7 @@ export class ClassController {
 
   
  @UseGuards(JwtAuthGuard, RolesGuard)
- @Roles('admin', 'adminStaff')
+ @Roles('campusAdmin', 'adminStaff')
 @Post('addClass')
 async addClass(@Req() req: any, @Body() body: any) {
   const adminId = req.user.userId;
@@ -37,13 +37,26 @@ async addClass(@Req() req: any, @Body() body: any) {
   return this.classService.addClass(body, adminId);
 }
 
+
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'adminStaff')
-@Get('getClasses')
-async getClasses(@Req() req: any) {
+@Get('getClassesByCampusAdmin')
+async getClassesByCampusAdmin(@Req() req: any, body: any) {
   const adminId = req.user.userId;
-  return this.classService.getClassesByAdmin(adminId);
+  return this.classService.getClassesByCampusAdmin(adminId);
 }
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'adminStaff')
+@Get('getCampusClassesBySchoolAdmin/:campusId')
+async getCampusClassesBySchoolAdmin(
+  @Req() req: any,
+  @Param('campusId') campusId: string,
+) {
+  const adminId = req.user.userId;
+  return this.classService.getCampusClassesBySchoolAdmin(adminId, campusId);
+}
+
 
 
 

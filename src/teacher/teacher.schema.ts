@@ -20,6 +20,9 @@ export class Teacher {
   @Prop()
   schoolId: string;
 
+  @Prop()
+  campusId: string;
+
   @Prop({ required: true })
   userType: string;
 

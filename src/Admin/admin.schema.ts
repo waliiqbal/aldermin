@@ -17,9 +17,12 @@ export class Admin {
 
   @Prop()
   schoolId?: string;
-
+  
   @Prop()
-  userType: string;
+  campusId?: string;
+
+   @Prop()
+  userType?: string;
 
   @Prop()
   otp?: string;

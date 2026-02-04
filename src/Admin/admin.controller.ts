@@ -37,7 +37,8 @@ export class AdminController {
 
 
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
+@Roles('superAdmin')  
 @Post('create-admin-school')
 async createAdminAndSchool(@Req() req, @Body() body: any) {
 
@@ -50,17 +51,21 @@ async createAdminAndSchool(@Req() req, @Body() body: any) {
   return this.adminService.createAdminAndSchool(body);
 }
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
+@Roles('admin')
 @Post('createCampusAndCampusAdmin')
 async createCampusAndCampusAdmin(@Req() req, @Body() body: any) {
 
   const role = req.user.role; 
+  const adminId = req.user.userId;
+  console.log(adminId)
   console.log(role)
    if (req.user.role !== 'admin') {
-    throw new UnauthorizedException('Only superadmins can access this API');
+    throw new UnauthorizedException('Only schooladmin can access this API');
   }
 
-  return this.adminService.createCampusAndCampusAdmin(body);
+
+  return this.adminService.createCampusAndCampusAdmin(adminId, body);
 }
 
 @Get('getAllSchools')
@@ -74,6 +79,21 @@ async getAllCampusesBySchool(
 ) {
   return this.adminService.getAllCampusesBySchool(schoolId);
 }
+
+@Get('getUserTypes')
+getUserTypes() {
+  return {
+    message: 'User types fetched successfully',
+    data: [
+      'parent',
+      'teacher',
+      'student',
+      'adminStaff'
+    ],
+  };
+}
+
+
 
 
 

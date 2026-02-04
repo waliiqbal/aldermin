@@ -10,6 +10,8 @@ export class Parent {
   @Prop({ type: String, required: true })
   schoolId: string;
 
+   @Prop({ type: String})
+  campusId: string;
 
   @Prop()
   fatherName: string;

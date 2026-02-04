@@ -71,7 +71,10 @@ async createAdminAndSchool(body: any) {
 
   const admin = await this.databaseService.repositories.adminModel.create({
     ...adminInfo,
+    userType: 'admin',
     password: hashedPassword,
+    role: 'admin',
+    isVerified: true,
   });
 
 
@@ -118,10 +121,14 @@ async createAdminAndSchool(body: any) {
 }
 
 
-async createCampusAndCampusAdmin(body: any) {
-  const { campusAdminInfo, campusInfo, adminId } = body;
+async createCampusAndCampusAdmin(adminId: string , body: any) {
+  const { campusAdminInfo, campusInfo } = body;
+
+
+  
 
   const admin = await this.databaseService.repositories.adminModel.findById(adminId);
+
   if (!admin) {
     throw new NotFoundException('Admin not found');
   }
@@ -154,7 +161,9 @@ async createCampusAndCampusAdmin(body: any) {
       ...campusAdminInfo,
       password: hashedPassword,
       role: 'CampusAdmin',
+      userType: 'campusAdmin',
       schoolId: schoolId,
+      isVerified: true,
     });
 
 const campus =
@@ -290,6 +299,7 @@ async loginAdmin(loginData: any) {
           name: admin.name,
           email: admin.email,
           role: admin.role,
+          userType: admin.userType,
         },
       },
     };
@@ -305,7 +315,7 @@ async loginSuperAdmin(loginData: any) {
     // 🔍 Superadmin find
     const admin = await this.databaseService.repositories.adminModel.findOne({
       email,
-      role: 'superAdmin', // only superadmin allowed
+      role: 'superAdmin', 
     });
 
     if (!admin) {

@@ -71,6 +71,8 @@ async signup(signupDto: SignupDto) {
       password: hashedPassword,
       userType,
       role: userType,
+      schoolId,
+      campusId,
       otp,
       otpExpiresAt,
       isVerified: false,
