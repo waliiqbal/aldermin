@@ -29,7 +29,7 @@ export class ClassController {
 
   
  @UseGuards(JwtAuthGuard, RolesGuard)
- @Roles('campusAdmin', 'adminStaff')
+ @Roles('campusAdmin', 'adminStaff', 'admin')
 @Post('addClass')
 async addClass(@Req() req: any, @Body() body: any) {
   const adminId = req.user.userId;
@@ -39,23 +39,50 @@ async addClass(@Req() req: any, @Body() body: any) {
 
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'adminStaff')
-@Get('getClassesByCampusAdmin')
-async getClassesByCampusAdmin(@Req() req: any, body: any) {
-  const adminId = req.user.userId;
-  return this.classService.getClassesByCampusAdmin(adminId);
-}
-
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'adminStaff')
-@Get('getCampusClassesBySchoolAdmin/:campusId')
-async getCampusClassesBySchoolAdmin(
+@Roles('campusAdmin', 'adminStaff', 'admin')
+@Post('editClass/:classId')
+async editClass(
   @Req() req: any,
-  @Param('campusId') campusId: string,
+  @Param('classId') classId: string,
+  @Body() body: any,
 ) {
   const adminId = req.user.userId;
-  return this.classService.getCampusClassesBySchoolAdmin(adminId, campusId);
+  return this.classService.editClass(classId, body, adminId);
 }
+
+
+// @UseGuards(JwtAuthGuard, RolesGuard)
+// @Roles('admin', 'adminStaff')
+// @Get('getClassesByCampusAdmin')
+// async getClassesByCampusAdmin(@Req() req: any, body: any) {
+//   const adminId = req.user.userId;
+//   return this.classService.getClassesByCampusAdmin(adminId);
+// }
+
+// @UseGuards(JwtAuthGuard, RolesGuard)
+// @Roles('admin', 'adminStaff')
+// @Get('getCampusClassesBySchoolAdmin/:campusId')
+// async getCampusClassesBySchoolAdmin(
+//   @Req() req: any,
+//   @Param('campusId') campusId: string,
+// ) {
+//   const adminId = req.user.userId;
+//   return this.classService.getCampusClassesBySchoolAdmin(adminId, campusId);
+// }
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'campusAdmin', 'adminStaff')
+@Get('getClassesByAdmin')
+async getClasses(
+  @Req() req: any,
+  @Query('campusId') campusId?: string,
+) {
+  const adminId = req.user.userId;
+
+  return this.classService.getClassesByAdmin(adminId, campusId);
+}
+
+
 
 
 

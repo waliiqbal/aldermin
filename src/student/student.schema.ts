@@ -5,23 +5,23 @@ export type StudentDocument = Student & Document;
 
 @Schema({ timestamps: true })
 export class Student {
-  @Prop({ required: true })
+  @Prop()
   academicYear: string;
 
-  @Prop({ required: true })
+  @Prop()
   classId: string;
 
-  @Prop({ required: true })
+  @Prop()
   sectionId: string;
 
-   @Prop()
+   @Prop({default: false})
   isVerified: boolean;
 
   
-  @Prop({ type: String, required: true })
+  @Prop({ type: String})
   parentId: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String})
   schoolId: string;
 
   @Prop({ type: String})
@@ -32,6 +32,13 @@ export class Student {
 
   @Prop({type: String})
   role: string;
+
+    @Prop()
+  otp?: string;
+
+  @Prop()
+  otpExpiresAt?: Date;
+
 
    @Prop()
   image?: string;
@@ -49,20 +56,18 @@ export class Student {
   @Prop()
   studentGroup: string;
 
-  @Prop({ required: true })
+  @Prop()
   idCard: string;
 
+   @Prop()
+  name: string;
 
-  @Prop({ required: true })
-  firstName: string;
+ 
 
-  @Prop({ required: true })
-  lastName: string;
-
-  @Prop({ required: true })
+  @Prop()
   gender: string;
 
-  @Prop({ required: true })
+  @Prop()
   dob: Date;
 
   @Prop()

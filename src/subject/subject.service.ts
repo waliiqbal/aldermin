@@ -157,16 +157,29 @@ async getAllSubjectByAdmin(adminId: string, classId?: string) {
       throw new Error('Subject not found');
     }
 
-    const assignment = subject.subjectAssignments.find(
-      (assignment) => assignment.sectionId === sectionId
-    );
+    const existingAssignment = subject.subjectAssignments.find(
+    (assignment) => 
+      assignment.teacherId === teacherId && 
+      assignment.sectionId === sectionId && 
+      assignment.academicYear === academicYear
+  );
 
-    if (!assignment) {
-      throw new Error('Section not found for this subject');
-    }
+  if (existingAssignment) {
+    throw new Error('Teacher already assigned to this section for the given academic year');
+  }
 
-    assignment.teacherId = teacherId;
-    assignment.academicYear = academicYear;
+
+  const assignment = subject.subjectAssignments.find(
+    (assignment) => assignment.sectionId === sectionId
+  );
+
+  if (!assignment) {
+    throw new Error('Section not found for this subject');
+  }
+
+
+  assignment.teacherId = teacherId;
+  assignment.academicYear = academicYear;
 
 
     await subject.save();

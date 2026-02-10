@@ -29,46 +29,42 @@ export class SectionController {
 
 
   ) {}
-
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin', 'adminStaff')
- @Post('addSection')
- async addSection(@Req() req: any, @Body() body: any) {
-   const adminId = req.user.userId;
-
-   return this.sectionService.addSection(body, adminId);
-
-}
-
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin', 'adminStaff')
-@Get('getAllSections')
-async getAllSections(@Req() req: any, @Query('classId') classId?: string) {
-  const adminId = req.user.userId;
-  return this.sectionService.getAllSectionsByAdmin(adminId, classId);
-}
-
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin', 'adminStaff')
-  @Post('assignClassTeacher')
-  async assignClassTeacher(
-    @Req() req: any, 
-    @Body() body: any
+@UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('schoolAdmin', 'campusAdmin', 'adminStaff')
+  @Get('getSections')
+  async getSections(
+    @Req() req: any,
+    @Query('classId') classId?: string,
+    @Query('campusId') campusId?: string,
   ) {
     const adminId = req.user.userId;
-    return this.sectionService.assignClassTeacher(body, adminId);
+    return this.sectionService.getAllSectionsByAdmin(adminId, classId, campusId);
   }
 
+  // 🔹 Add Section
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'adminStaff')
-  @Post('editSection')
-  async editSection(@Req() req: any, @Body() body: any) {
-    const adminId = req.user.userId; 
-
- 
-    return this.sectionService.editSection(body, adminId);
+  @Roles('schoolAdmin', 'campusAdmin', 'adminStaff')
+  @Post('addSection')
+  async addSection(
+    @Req() req: any,
+    @Body() body: any,
+  ) {
+    const adminId = req.user.userId;
+    return this.sectionService.addSection(body, adminId);
   }
 
+  // 🔹 Edit Section
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('schoolAdmin', 'campusAdmin', 'adminStaff')
+  @Post('editSection/:sectionId')
+  async editSection(
+    @Req() req: any,
+    @Param('sectionId') sectionId: string,
+    @Body() body: any,
+  ) {
+    const adminId = req.user.userId;
+    return this.sectionService.editSection(sectionId, body, adminId);
+  }
+}
   
 
-}

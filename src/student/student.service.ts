@@ -4,6 +4,8 @@ import { Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { OtpService } from 'src/otp/otp.service';
+import { UpdateStudentDto } from './dto/addStudentHimself.dto';
+import { Campus } from 'src/Admin/campus.schema';
 
 
 @Injectable()
@@ -16,31 +18,52 @@ export class StudentService {
 
 
 async addStudentWithParent(body: any, adminId: string) {
-  const { studentInfo, parentInfo } = body;
-  const adminObjectId = new Types.ObjectId(adminId);
-
-  const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
-  if (!adminData) {
+  const { studentInfo, parentInfo, campusId } = body;
+const admin = await this.databaseService.repositories.adminModel.findById(adminId);
+ if (!admin) {
     throw new NotFoundException('Admin/Admin Staff not found');
   }
 
-  const schoolId = adminData.schoolId;
+  const schoolId = admin.schoolId;
   if (!schoolId) {
-    throw new BadRequestException('School ID not found for this admin/admin_staff');
+    throw new BadRequestException('School not assigned');
   }
 
-  const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
-  if (!school) {
-    throw new NotFoundException('School not found for this admin');
+  let finalCampusId: string;
+
+  
+  if (admin.role === 'campusAdmin' || admin.role === 'adminStaff') {
+    if (!admin.campusId) {
+      throw new BadRequestException('Campus not assigned to this admin');
+    }
+    finalCampusId = admin.campusId;
+  }
+
+
+  else if (admin.role === 'admin') {
+    if (!campusId) {
+      throw new BadRequestException('Campus ID is required for school admin');
+    }
+
+    const campus = await this.databaseService.repositories.campusModel.findOne({
+      _id: campusId,
+      schoolId: schoolId,
+    });
+
+    if (!campus) {
+      throw new NotFoundException('Campus does not belong to this school');
+    }
+
+    finalCampusId = campusId;
+  } else {
+    throw new NotFoundException('You are not allowed to add student');
   }
 
 
   let parent = await this.databaseService.repositories.parentModel.findOne({
-    $or: [
-      { fatherEmail: parentInfo.fatherEmail },
-      { motherEmail: parentInfo.motherEmail },
-      { guardianEmail: parentInfo.guardianEmail }
-    ]
+
+       email: parentInfo.email ,
+     
   });
 
   if (!parent) {
@@ -51,12 +74,14 @@ async addStudentWithParent(body: any, adminId: string) {
     parent = await this.databaseService.repositories.parentModel.create({
       ...parentInfo,
       schoolId: schoolId,
+      campusId: finalCampusId,
       password: parentHashedPassword,
       isVerified: true,
+      
     });
 
 
-    await this.otpService.sendPassword(parentInfo.fatherEmail, parentRandomPassword);
+    await this.otpService.sendPassword(parentInfo.email, parentRandomPassword);
   }
 
  
@@ -67,14 +92,15 @@ async addStudentWithParent(body: any, adminId: string) {
     ...studentInfo,
     schoolId: schoolId,
     parentId: parent._id,
+    campusId: finalCampusId,
     password: studentHashedPassword,
     isVerified: true,
   });
 
-  // Send password to student's email
+  
   await this.otpService.sendPassword(studentInfo.email, studentRandomPassword);
 
-  // ---------------- Clean response ----------------
+  
   const cleanStudent = await this.databaseService.repositories.studentModel
     .findById(newStudent._id)
     .select('-__v -createdAt -updatedAt -password');
@@ -94,28 +120,153 @@ async addStudentWithParent(body: any, adminId: string) {
 
 
 
+async addStudentDetailsBySelf(studentBody: UpdateStudentDto, studentId: string) {
+  const {  parentEmail, ...details } = studentBody;
+
+  const student = await this.databaseService.repositories.studentModel.findOne({
+    _id: studentId,
+    status: 'active',
+  });
+  if (parentEmail) {
+    const parent = await this.databaseService.repositories.parentModel.findOne({ fatherEmail: parentEmail });
+    if (!parent) {
+      throw new NotFoundException('Parent not found with this email');
+    }
+    student.parentId = parent._id.toString();
+  }
+
+
+  for (const key in details) {
+    if (details[key] !== undefined && key !== 'parentId') {
+      student[key] = details[key];
+    }
+  }
+
+  
+  await student.save();
+
+  
+  const cleanStudent = await this.databaseService.repositories.studentModel
+    .findById(student._id)
+    .select('-password -__v -createdAt -updatedAt');
+
+  return {
+    message: 'Student details updated successfully',
+    data: cleanStudent,
+  };
+}
+
+async getStudentBySelf(studentId: string) {
+
+  const student = await this.databaseService.repositories.studentModel
+    .findById(studentId)
+    .select('-password -__v -createdAt -updatedAt');
+
+  if (!student) {
+    throw new NotFoundException('Student not found');
+  }
+
+  return {
+    message: 'Student fetched successfully',
+    data: student,
+  };
+}
+
+
+ async addParentDetailsBySelf(body: any, parentId: string) {
+
+  console.log('Received body:', body);
+
+  const parent = await this.databaseService.repositories.parentModel.findOne({
+    _id: parentId,
+    status: 'active',
+  });
+
+  if (!parent) {
+    throw new Error('Parent not found');
+  }
+
+  for (const key in body) {
+    if (body[key] !== undefined) {
+      parent[key] = body[key];
+    }
+  }
+
+  await parent.save();
+
+  const cleanParent = await this.databaseService.repositories.parentModel
+    .findById(parent._id)
+    .select('-password -__v -createdAt -updatedAt');
+
+  return {
+    message: 'Parent details updated successfully',
+    data: cleanParent,
+  };
+}
+
+async getParentBySelf(parentId: string) {
+
+  const parent = await this.databaseService.repositories.parentModel
+    .findById(parentId)
+    .select('-password -__v -createdAt -updatedAt');
+
+  if (!parent) {
+    throw new NotFoundException('Parent not found');
+  }
+
+  return {
+    message: 'Parent fetched successfully',
+    data: parent,
+  };
+}
+
+
+
+
 
 
   async getStudentsByAdmin(adminId: string, query: any) {
-   const adminObjectId = new Types.ObjectId(adminId);
+   const admin = await this.databaseService.repositories.adminModel.findById(adminId);
+ if (!admin) {
+    throw new NotFoundException('Admin/Admin Staff not found');
+  }
 
-    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
+  const schoolId = admin.schoolId;
+  if (!schoolId) {
+    throw new BadRequestException('School not assigned');
+  }
+
+  let finalCampusId: string;
+
+  
+  if (admin.role === 'campusAdmin' || admin.role === 'adminStaff') {
+    if (!admin.campusId) {
+      throw new BadRequestException('Campus not assigned to this admin');
+    }
+    finalCampusId = admin.campusId;
+  }
 
 
-    if (!adminData) {
-      throw new NotFoundException('Admin/Admin Staff not found');
+  else if (admin.role === 'admin') {
+    if (!query.campusId) {
+      throw new BadRequestException('Campus ID is required for school admin');
     }
 
-    const schoolId = adminData.schoolId;
-    if (!schoolId) {
-      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    const campus = await this.databaseService.repositories.campusModel.findOne({
+      _id: query.campusId,
+      schoolId: schoolId,
+    });
+
+    if (!campus) {
+      throw new NotFoundException('Campus does not belong to this school');
     }
-   
-    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
+
+    finalCampusId = query.campusId;
+  } else {
+    throw new NotFoundException('You are not allowed to edit section');
+  }
+
     
-    if (!school) {
-      throw new NotFoundException('School not found for this admin');
-    }
 
 
     const page = Math.max(1, parseInt(query.page, 10) || 1);
@@ -124,7 +275,8 @@ async addStudentWithParent(body: any, adminId: string) {
 
    
     const match: any = {
-    schoolId: school._id.toString(),
+    schoolId: schoolId,
+    CampusId: finalCampusId,
     status: 'active',
   };
 
@@ -162,8 +314,7 @@ async addStudentWithParent(body: any, adminId: string) {
             sectionId: '$sectionId',
             academicYear: '$academicYear',
             admissionNo: '$admissionNo',
-            firstName: '$firstName',
-            lastName: '$lastName',
+            name: '$name',
             dob: '$dob',
             gender: '$gender',
             email: '$email',
@@ -207,31 +358,54 @@ async addStudentWithParent(body: any, adminId: string) {
     newSectionId: string,
     newRollNo: number,
     newAcademicYear: string,
+    campusId?: string,
   ) {
-    const adminObjectId = new Types.ObjectId(adminId);
+    const admin = await this.databaseService.repositories.adminModel.findById(adminId);
+ if (!admin) {
+    throw new NotFoundException('Admin/Admin Staff not found');
+  }
 
-    const adminData = await this.databaseService.repositories.adminModel.findById(adminObjectId);
+  const schoolId = admin.schoolId;
+  if (!schoolId) {
+    throw new BadRequestException('School not assigned');
+  }
+
+  let finalCampusId: string;
+
+  
+  if (admin.role === 'campusAdmin' || admin.role === 'adminStaff') {
+    if (!admin.campusId) {
+      throw new BadRequestException('Campus not assigned to this admin');
+    }
+    finalCampusId = admin.campusId;
+  }
 
 
-    if (!adminData) {
-      throw new NotFoundException('Admin/Admin Staff not found');
+  else if (admin.role === 'admin') {
+    if (!campusId) {
+      throw new BadRequestException('Campus ID is required for school admin');
     }
 
-    const schoolId = adminData.schoolId;
-    if (!schoolId) {
-      throw new BadRequestException('School ID not found for this admin/admin_staff');
+    const campus = await this.databaseService.repositories.campusModel.findOne({
+      _id: campusId,
+      schoolId: schoolId,
+    });
+
+    if (!campus) {
+      throw new NotFoundException('Campus does not belong to this school');
     }
-   
-    const school = await this.databaseService.repositories.schoolModel.findById(schoolId);
-    
-    if (!school) {
-      throw new NotFoundException('School not found for this admin');
-    }
+
+    finalCampusId = campusId;
+  } else {
+    throw new NotFoundException('You are not allowed to add student');
+  }
 
 
     const student = await this.databaseService.repositories.studentModel.findOne({
   _id: studentId,
   status: 'active',
+  schoolId: schoolId,
+  campusId: finalCampusId,
 });
 
     if (!student) throw new UnauthorizedException('Student not found');

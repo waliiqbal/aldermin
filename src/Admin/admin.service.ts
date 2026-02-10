@@ -160,7 +160,7 @@ async createCampusAndCampusAdmin(adminId: string , body: any) {
     await this.databaseService.repositories.adminModel.create({
       ...campusAdminInfo,
       password: hashedPassword,
-      role: 'CampusAdmin',
+      role: 'campusAdmin',
       userType: 'campusAdmin',
       schoolId: schoolId,
       isVerified: true,

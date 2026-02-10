@@ -81,8 +81,9 @@ async signup(signupDto: SignupDto) {
 
     await user.save();
 
-    // 5️⃣ Send OTP
+    
     await this.otpService.sendOtp(email, otp);
+    console.log(otp);
 
     return {
       message: 'OTP sent successfully',

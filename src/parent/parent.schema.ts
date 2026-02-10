@@ -14,10 +14,29 @@ export class Parent {
   campusId: string;
 
   @Prop()
-  fatherName: string;
+  name: string;
 
     @Prop()
-  fatherEmail: string;
+  email: string;
+
+  @Prop({ default: "active" })
+  status: string;
+
+   @Prop({ default: false })
+  isVerified: boolean
+
+      @Prop()
+    otp?: string;
+  
+    @Prop()
+    otpExpiresAt?: Date;
+  
+    @Prop()
+  password: string;
+
+   @Prop({type: String})
+  role: string;
+
 
   @Prop({ required: String })
   userType: string;
@@ -25,58 +44,16 @@ export class Parent {
    @Prop()
   image?: string;
 
-  @Prop({type: String})
-  role: string;
+  
 
   @Prop()
-  fatherOccupation: string;
+  Occupation: string;
 
   @Prop()
-  fatherMobile: string;
-
-  @Prop()
-  fatherPhoto: string;
+  phoneNumber: string;
 
 
-  @Prop()
-  motherName: string;
 
-  @Prop()
-  motherOccupation: string;
-
-  @Prop()
-  motherMobile: string;
-
-  @Prop()
-  motherPhoto: string;
-
-    @Prop()
-  motherEmail: string;
-
-
-  // Guardian Info
-  @Prop()
-  guardianName: string;
-
-  @Prop()
-  relationWithGuardian: string;
-
-  @Prop()
-  guardianEmail: string;
-
-  @Prop()
-  guardianMobile: string;
-
-  @Prop()
-  guardianOccupation: string;
-
-  @Prop()
-  guardianAddress: string;
-
-  @Prop()
-  guardianPhoto: string;
-
-  // Document Information
   @Prop()
   nationalIdNumber: string;
 
@@ -100,29 +77,14 @@ export class Parent {
   @Prop()
   document1Title: string;
 
-  @Prop()
-  document1File: string;
 
   @Prop()
   document2Title: string;
 
-  @Prop()
-  document2File: string;
-
-  @Prop()
-  document3Title: string;
 
   @Prop()
   document3File: string;
-  
-    @Prop({ default: "active" })
-  status: string;
 
-   @Prop()
-  isVerified: boolean
-
-    @Prop()
-  password: string;
 
 
 }

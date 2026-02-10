@@ -166,11 +166,10 @@ async getHomeworksByAdmin(
 
   const skip = (page - 1) * limit;
 
-  // 🔹 AGGREGATION PIPELINE
   const pipeline: any[] = [
     { $match: match },
 
-    // ---------- CLASS ----------
+  
     {
       $lookup: {
         from: 'classes',
@@ -195,7 +194,7 @@ async getHomeworksByAdmin(
       },
     },
 
-    // ---------- SECTION ----------
+
     {
       $lookup: {
         from: 'sections',

@@ -17,6 +17,7 @@ import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { Roles } from 'src/auth/decorator/roles.decorator';
 import { RolesGuard } from 'src/auth/guard/roles.guard';  
+import { UpdateStudentDto } from './dto/addStudentHimself.dto'; 
 
 
 
@@ -38,6 +39,46 @@ export class StudentController {
 
 }
 
+@UseGuards(JwtAuthGuard)
+  @Post('addStudentDetails')
+  async updateStudentDetails(
+    @Req() req: any,
+    @Body() body: UpdateStudentDto,
+  ) {
+    const studentId = req.user.userId;
+    return this.StudentService.addStudentDetailsBySelf(body, studentId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('addParentDetails')
+  async addParentDetailsBySelf(
+    @Req() req: any,
+    @Body() body: any,
+  ) {
+    const parentId = req.user.userId;
+    
+    return this.StudentService.addParentDetailsBySelf(body, parentId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+@Get('getParentBySelf')
+async getParentBySelf(@Req() req: any) {
+
+  const parentId = req.user.userId;
+
+  return this.StudentService.getParentBySelf(parentId);
+}
+
+
+  @UseGuards(JwtAuthGuard)
+@Get('getStudentBySelf')
+async getStudentBySelf(@Req() req: any) {
+
+  const studentId = req.user.userId; // token se aa raha hai
+
+  return this.StudentService.getStudentBySelf(studentId);
+}
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Get('getStudentsByAdmin')
@@ -54,6 +95,8 @@ export class StudentController {
     return this.StudentService.getStudentsByAdmin(adminId, { page, limit, classId, sectionId });
   }
 
+  
+
 
     @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'adminStaff')
@@ -66,6 +109,7 @@ async promoteStudent(
     newSectionId: string;
     newRollNo: number;
     newAcademicYear: string;
+    campusId?: string; 
   },
 ) {
   const adminId = req.user.userId;
@@ -79,6 +123,7 @@ async promoteStudent(
     body.newSectionId,
     body.newRollNo,
     body.newAcademicYear,
+    body.campusId,
   );
 }
 

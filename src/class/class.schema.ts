@@ -9,6 +9,8 @@ export class Class {
     @Prop()
   schoolId: string;
 
+   @Prop()
+  campusId: string;
 
   @Prop({ required: true, unique: true })
   name: string; 
