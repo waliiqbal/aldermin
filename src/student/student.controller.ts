@@ -74,7 +74,7 @@ async getParentBySelf(@Req() req: any) {
 @Get('getStudentBySelf')
 async getStudentBySelf(@Req() req: any) {
 
-  const studentId = req.user.userId; // token se aa raha hai
+  const studentId = req.user.userId; 
 
   return this.StudentService.getStudentBySelf(studentId);
 }

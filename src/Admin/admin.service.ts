@@ -337,6 +337,12 @@ async loginSuperAdmin(loginData: any) {
       { expiresIn: '30m' }
     );
 
+     await this.redisService.set(
+  accessToken,
+  admin._id.toString(),
+  15 * 60, 
+);
+
    
     const refreshToken = this.jwtService.sign(
       {
@@ -346,6 +352,12 @@ async loginSuperAdmin(loginData: any) {
       },
       { expiresIn: '30d' }
     );
+
+         await this.redisService.set(
+  accessToken,
+  admin._id.toString(),
+  15 * 60, 
+);
 
    
     admin.refreshToken = refreshToken;
